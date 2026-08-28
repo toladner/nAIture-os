@@ -108,6 +108,17 @@ else
   record windows warn "no Klassy — windows have square corners (install it for the design's 22px)"
 fi
 
+# --- widget style ---
+style="$(kreadconfig6 --file kdeglobals --group KDE --key widgetStyle 2>/dev/null)"
+if [[ "$style" == "kvantum" ]]; then
+  kvtheme="$(kreadconfig6 --file Kvantum/kvantum.kvconfig --group General --key theme 2>/dev/null)"
+  [[ "$kvtheme" == "Naiture" ]] \
+    && record widgets ok "Kvantum/Naiture, translucent bodies" \
+    || record widgets warn "Kvantum active but theme is '${kvtheme:-unset}'"
+else
+  record widgets warn "widget style '${style:-unset}' — window bodies are opaque; install kvantum"
+fi
+
 # --- konsole ---
 kprofile="$(kreadconfig6 --file konsolerc --group "Desktop Entry" --key DefaultProfile 2>/dev/null)"
 [[ "$kprofile" == "Naiture.profile" ]] \

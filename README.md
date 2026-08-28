@@ -16,7 +16,7 @@ Built and tested on **Fedora 44, Plasma 6.6.4, Wayland**.
 | Plasma theme | `naiture` — same palette for the shell, with background-contrast at the design's `saturate(170%)` |
 | Wallpaper | Generated from the design's own gradient, glows, mist band and 44-blade grass field, at your screen's resolution |
 | Panels | Floating, fit-to-content, 50px islands with adaptive translucency |
-| Windows | 22px rounded glass with translucent titlebars via Klassy, blur + background contrast; falls back to borderless Breeze if Klassy is absent |
+| Windows | 22px rounded corners and translucent titlebars via Klassy, translucent bodies via Kvantum, blur + background contrast. No app icon and no window buttons, as in the design. Falls back to borderless Breeze / opaque Breeze widgets when those are absent. |
 | Fonts | Archivo for the UI, JetBrains Mono for anything fixed-width |
 | Konsole | `Naiture` profile and colour scheme, 82% opacity with blur |
 
@@ -118,6 +118,10 @@ a plain gradient.
   and solidifies on hover. Plasma panels have no hover opacity, so the island
   sits at the resting film all the time.
 * **GTK apps.** Firefox, GNOME apps and Flatpaks keep their own theme.
+
+* **No window buttons.** The design has none, so neither does this. Close a
+  window with Alt+F4, or right-click its titlebar. To get them back:
+  `kwriteconfig6 --file kwinrc --group org.kde.kdecoration3 --key ButtonsOnRight IAX`
 * **Login and boot.** SDDM, the Plasma splash and GRUB are untouched.
 
 ## Layout

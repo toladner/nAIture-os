@@ -65,6 +65,7 @@ backup() {
   : > "$BACKUP/.absent"
   local f
   for f in kdeglobals kwinrc plasmarc konsolerc breezerc plasmashellrc klassy/klassyrc \
+           Kvantum/kvantum.kvconfig \
            plasma-org.kde.plasma.desktop-appletsrc; do
     if [[ -f "$CONF/$f" ]]; then
       mkdir -p "$(dirname "$BACKUP/$f")"
@@ -152,7 +153,6 @@ write_config() {
   $kw --file kdeglobals --group General --key AccentColor "106,191,217"
   $kw --file kdeglobals --group General --key LastUsedCustomAccentColor "106,191,217"
   $kw --file kdeglobals --group General --key accentColorFromWallpaper false
-  $kw --file kdeglobals --group KDE     --key widgetStyle Breeze
   $kw --file kdeglobals --group Icons   --key Theme breeze-dark
 
   # Glass. The design is backdrop-filter: blur(40px) saturate(170%); Plasma's
@@ -243,6 +243,7 @@ apply() {
   fi
 
   bash "$REPO/scripts/window-decoration.sh"
+  bash "$REPO/scripts/widget-style.sh"
 
   if command -v qdbus-qt6 >/dev/null 2>&1; then
     qdbus-qt6 org.kde.KWin /KWin reconfigure >/dev/null 2>&1 || true
