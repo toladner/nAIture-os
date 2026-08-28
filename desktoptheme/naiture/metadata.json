@@ -1,0 +1,14 @@
+{
+  "KPlugin": {
+    "Authors": [{ "Email": "toladner@gmail.com", "Name": "toladner" }],
+    "Category": "",
+    "Description": "Glass islands over a moss field — the naiture Plasma theme.",
+    "EnabledByDefault": true,
+    "Id": "naiture",
+    "License": "GPL-3.0-or-later",
+    "Name": "Naiture",
+    "Version": "1.0",
+    "Website": "https://github.com/toladner/nAIture-os"
+  },
+  "X-Plasma-API": "5.0"
+}

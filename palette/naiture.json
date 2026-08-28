@@ -1,0 +1,62 @@
+{
+  "name": "naiture",
+  "source": "Claude Design canvas 598d2e7b-6845-4aad-99cf-3541c765effb",
+  "note": "Authored in OKLCH; sRGB values produced by tools/oklch.py.",
+
+  "accent": {
+    "sky":       { "oklch": "0.76 0.09 220", "hex": "#6abfd9", "role": "primary accent, selection, focus" },
+    "skyBright": { "oklch": "0.80 0.09 220", "hex": "#77cce6", "role": "hover, active link" },
+    "skyPale":   { "oklch": "0.95 0.05 220", "hex": "#caf7ff", "role": "text on accent fill" },
+    "skyDeep":   { "oklch": "0.62 0.11 220", "hex": "#1195b4", "role": "pressed, visited link" },
+    "moss":      { "oklch": "0.72 0.13 152", "hex": "#5ebc7b", "role": "positive, secondary accent" },
+    "mossDeep":  { "oklch": "0.62 0.14 155", "hex": "#269e5f", "role": "positive pressed" },
+    "gold":      { "oklch": "0.84 0.13 100", "hex": "#decc60", "role": "neutral / attention" },
+    "ember":     { "oklch": "0.70 0.16 25",  "hex": "#f2716a", "role": "negative, close affordance" }
+  },
+
+  "sky_gradient": [
+    { "stop": "0%",   "oklch": "0.52 0.07 215", "hex": "#327382" },
+    { "stop": "26%",  "oklch": "0.40 0.06 190", "hex": "#16524f" },
+    { "stop": "52%",  "oklch": "0.32 0.06 160", "hex": "#103c28" },
+    { "stop": "74%",  "oklch": "0.24 0.05 145", "hex": "#0e2510" },
+    { "stop": "100%", "oklch": "0.18 0.04 135", "hex": "#091504" }
+  ],
+
+  "surface": {
+    "root":     { "hex": "#0b100d", "role": "desktop backdrop behind everything" },
+    "frame":    { "hex": "#0d1410", "role": "screen frame" },
+    "window":   { "hex": "#0d1811", "alpha": 0.70, "role": "window body, glass" },
+    "windowUnfocused": { "hex": "#0d1811", "alpha": 0.60 },
+    "island":   { "hex": "#0a120d", "alpha": 0.84, "role": "panel over a maximised window" },
+    "islandLight": { "hex": "#f0f8f0", "alpha": 0.12, "role": "panel over the wallpaper" },
+    "view":     { "hex": "#081109", "role": "text entry, lists" },
+    "canopy":   { "hex": "#031201", "role": "deepest shade, grass base" }
+  },
+
+  "text": {
+    "primary":   { "hex": "#f2f7f2" },
+    "heading":   { "hex": "#e6ece6" },
+    "secondary": { "hex": "#f2f7f2", "alpha": 0.70 },
+    "muted":     { "hex": "#f2f7f2", "alpha": 0.45 },
+    "faint":     { "hex": "#67766a" }
+  },
+
+  "geometry": {
+    "windowRadius": 22,
+    "islandRadius": 16,
+    "tileRadius": 13,
+    "buttonRadius": 11,
+    "panelHeight": 50,
+    "blur": "40px",
+    "saturate": 1.7,
+    "hairline": "rgba(255,255,255,0.18)",
+    "hairlineDim": "rgba(255,255,255,0.11)"
+  },
+
+  "type": {
+    "ui": "Archivo",
+    "mono": "JetBrains Mono",
+    "uiSizePt": 10,
+    "monoSizePt": 10
+  }
+}

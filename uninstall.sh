@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+# Remove the naiture theme and restore the settings install.sh snapshotted.
+set -euo pipefail
+
+DATA="${XDG_DATA_HOME:-$HOME/.local/share}"
+CONF="${XDG_CONFIG_HOME:-$HOME/.config}"
+BACKUP="$CONF/naiture/backup"
+
+KEEP_FONTS=0
+[[ "${1:-}" == "--keep-fonts" ]] && KEEP_FONTS=1
+
+say()  { printf '\033[38;2;106;191;217m::\033[0m %s\n' "$*"; }
+warn() { printf '\033[38;2;222;204;96m!!\033[0m %s\n' "$*" >&2; }
+
+if [[ -d "$BACKUP" ]]; then
+  for f in "$BACKUP"/*; do
+    name="$(basename "$f")"
+    [[ "$name" == .* ]] && continue
+    cp -a "$f" "$CONF/$name"
+  done
+  say "restored config from $BACKUP (taken $(cat "$BACKUP/.taken-at" 2>/dev/null || echo 'unknown'))"
+else
+  warn "no backup at $BACKUP — falling back to Breeze Dark defaults"
+  kwriteconfig6 --file plasmarc  --group Theme   --key name breeze-dark
+  kwriteconfig6 --file konsolerc --group "Desktop Entry" --key DefaultProfile --delete || true
+fi
+
+rm -f  "$DATA/color-schemes/Naiture.colors"
+rm -rf "$DATA/plasma/desktoptheme/naiture"
+rm -rf "$DATA/wallpapers/naiture"
+rm -f  "$DATA/konsole/Naiture.colorscheme" "$DATA/konsole/Naiture.profile"
+
+if [[ $KEEP_FONTS -eq 0 ]]; then
+  rm -rf "$DATA/fonts/naiture"
+  fc-cache -f >/dev/null 2>&1 || true
+  say "removed the naiture fonts (pass --keep-fonts to keep them)"
+fi
+
+say "reloading the session"
+if [[ -d "$BACKUP" ]]; then
+  scheme="$(kreadconfig6 --file kdeglobals --group General --key ColorScheme 2>/dev/null || true)"
+  [[ -n "$scheme" ]] && plasma-apply-colorscheme "$scheme" >/dev/null 2>&1 || true
+  theme="$(kreadconfig6 --file plasmarc --group Theme --key name 2>/dev/null || true)"
+  [[ -n "$theme" ]] && plasma-apply-desktoptheme "$theme" >/dev/null 2>&1 || true
+else
+  plasma-apply-colorscheme BreezeDark  >/dev/null 2>&1 || true
+  plasma-apply-desktoptheme breeze-dark >/dev/null 2>&1 || true
+fi
+command -v qdbus-qt6 >/dev/null 2>&1 && qdbus-qt6 org.kde.KWin /KWin reconfigure >/dev/null 2>&1 || true
+
+cat <<'EOF'
+
+  naiture removed. Panel layout is not rebuilt automatically — if you used
+  --islands, restore it with:
+      cp ~/.config/naiture/backup/plasma-org.kde.plasma.desktop-appletsrc ~/.config/
+      systemctl --user restart plasma-plasmashell
+EOF

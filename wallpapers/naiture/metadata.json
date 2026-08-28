@@ -1,0 +1,12 @@
+{
+  "KPlugin": {
+    "Authors": [{ "Email": "toladner@gmail.com", "Name": "toladner" }],
+    "Id": "naiture",
+    "License": "CC-BY-SA-4.0",
+    "Name": "Naiture",
+    "Description": "Teal dusk over a moss field — the naiture backdrop.",
+    "Version": "1.0",
+    "Website": "https://github.com/toladner/nAIture-os"
+  },
+  "X-KDE-PluginInfo-Category": "Wallpaper"
+}
