@@ -91,6 +91,8 @@ install_assets() {
   if command -v python3 >/dev/null 2>&1; then
     python3 "$REPO/tools/make_panel_svg.py" -d "$DATA/plasma/desktoptheme/naiture" \
       >/dev/null 2>&1 || true
+    python3 "$REPO/tools/make_tasks_svg.py" -d "$DATA/plasma/desktoptheme/naiture" \
+      >/dev/null 2>&1 || true
   fi
 
   mkdir -p "$DATA/wallpapers"
