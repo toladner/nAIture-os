@@ -64,18 +64,23 @@ in this repo needs root, so this only matters for installing prerequisites.
 **Interactive logins can't be driven.** `gh auth login` and similar need a real
 terminal. Ask the user; driving them over a pty gets the process killed.
 
-**plasmashell drops Panel geometry set from its scripting API.** On Plasma 6.6,
-`evaluateScript` accepts `panel.height`, `.floating`, `.lengthMode` and silently
-does not persist them, and it always returns an empty string, so you cannot tell
-success from the return value. Panel *creation* and *removal* do persist.
-`scripts/panel-style.sh` therefore writes `thickness`, `panelLengthMode`,
-`panelOpacity`, `floating` and `alignment` into
-`[Containments][N][General]` of `plasma-org.kde.plasma.desktop-appletsrc` and
-restarts the shell. Do not "fix" this back to the scripting API.
+**Panel geometry is not in the applets file.** This is the single easiest thing
+to get wrong here. `plasma-org.kde.plasma.desktop-appletsrc` holds a panel's
+applets and its `location`; `thickness`, `alignment`, `panelLengthMode`,
+`panelOpacity` and `floating` live in **`~/.config/plasmashellrc`** under
+`[PlasmaViews][Panel <id>]`. Writing them into the containment does nothing at
+all, silently.
 
-**Panel changes need the shell restarted.** plasmashell caches containment
-config and rewrites the file on exit, so editing the config without restarting
-gets your edit overwritten.
+**plasmashell rewrites its config on exit**, so it must be *stopped* while those
+keys are written — restarting afterwards is not enough, the old values come
+back. `scripts/panel-style.sh` does stop / write / start in that order.
+
+**The scripting API only half-works for panels.** `evaluateScript` persists
+panel creation, removal and `location`, and `floating`; `height`, `lengthMode`,
+`alignment` and `opacityMode` are accepted and silently dropped. It always
+returns an empty string, so the return value tells you nothing. Applet config
+written through `widgetById(...).writeConfig()` also did not stick — write it
+into the applets file instead, while the shell is stopped.
 
 **Testing safely.** Point `XDG_CONFIG_HOME` and `XDG_DATA_HOME` at a temp
 directory and pass `--no-apply`; that exercises the whole installer without

@@ -78,16 +78,18 @@ mapfile -t panels < <(
 if [[ ${#panels[@]} -eq 0 ]]; then
   record panels fail "no panels found"
 else
+  # Geometry lives in plasmashellrc, not with the containment.
   styled=0
   for id in "${panels[@]}"; do
-    t="$(kreadconfig6 --file "$APPLETSRC" --group Containments --group "$id" --group General --key thickness 2>/dev/null)"
-    f="$(kreadconfig6 --file "$APPLETSRC" --group Containments --group "$id" --group General --key floating 2>/dev/null)"
-    [[ "$t" == "50" && "$f" == "true" ]] && styled=$(( styled + 1 ))
+    t="$(kreadconfig6 --file plasmashellrc --group PlasmaViews --group "Panel $id" --key thickness 2>/dev/null)"
+    f="$(kreadconfig6 --file plasmashellrc --group PlasmaViews --group "Panel $id" --key floating 2>/dev/null)"
+    l="$(kreadconfig6 --file plasmashellrc --group PlasmaViews --group "Panel $id" --key panelLengthMode 2>/dev/null)"
+    [[ "$t" == "50" && "$f" == "1" && "$l" == "1" ]] && styled=$(( styled + 1 ))
   done
   if [[ $styled -eq ${#panels[@]} ]]; then
-    record panels ok "${#panels[@]} panel(s), all 50px and floating"
+    record panels ok "${#panels[@]} panel(s), all 50px, floating, fit-to-content"
   else
-    record panels fail "$styled of ${#panels[@]} panel(s) styled"
+    record panels fail "$styled of ${#panels[@]} panel(s) styled (see plasmashellrc)"
   fi
 fi
 

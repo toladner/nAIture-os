@@ -44,12 +44,17 @@ opaque-dark when a window is maximised behind them.
 | translucent, but opaque behind a maximised window | `panelOpacity=0` (adaptive) |
 | centred / right | `alignment=132` / `alignment=2` |
 
-These keys live in `[Containments][N][General]` of
-`plasma-org.kde.plasma.desktop-appletsrc`. Note that plasmashell's scripting API
-exposes the same properties on its `Panel` object but does **not** persist them
-on 6.6, which is why `scripts/panel-style.sh` writes the config directly and
-restarts the shell. Panel *creation* through the scripting API does work, so
-`scripts/panel-islands.js` handles that half of `--islands`.
+These keys live in `~/.config/plasmashellrc` under `[PlasmaViews][Panel <id>]`
+— **not** with the containment in `plasma-org.kde.plasma.desktop-appletsrc`,
+which only carries the applets and the panel's `location`. plasmashell rewrites
+plasmashellrc when it exits, so `scripts/panel-style.sh` stops the shell, writes,
+and starts it again. Panel creation and removal do work through the scripting
+API, which is what `scripts/panel-islands.js` uses.
+
+The design's pill shows only `10:12`, with Wi-Fi, Bluetooth, sound, do-not-disturb
+and the volume/brightness sliders appearing when it is clicked. Plasma's system
+tray popup is already that panel, so the tray sits in the time island beside the
+clock and the clock itself is configured for time only, 24-hour, no date.
 
 ## Accents
 

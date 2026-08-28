@@ -13,15 +13,17 @@ WALLPAPER_W=0
 WALLPAPER_H=0
 DO_FONTS=1
 DO_APPLY=1
-DO_ISLANDS=0
+DO_ISLANDS=1
 
 usage() {
   cat <<'USAGE'
 Usage: ./install.sh [options]
 
-  --islands          replace the panel layout with the design's two bottom
-                     islands (centred switcher + right-hand clock).
-                     Without this the existing panels are only restyled.
+  --keep-panels      keep your current panel layout and only restyle it.
+                     By default naiture replaces the panels with the design's
+                     two bottom islands: a centred switcher (launcher, tasks,
+                     tray) and a right-hand time pill. That is destructive to
+                     the existing layout, which the backup preserves.
   --no-fonts         skip downloading Archivo / JetBrains Mono.
   --no-apply         install assets and write config, but do not reload the
                      running session.
@@ -33,7 +35,8 @@ USAGE
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --islands)  DO_ISLANDS=1 ;;
+    --islands)      DO_ISLANDS=1 ;;   # kept for compatibility; now the default
+    --keep-panels)  DO_ISLANDS=0 ;;
     --no-fonts) DO_FONTS=0 ;;
     --no-apply) DO_APPLY=0 ;;
     --size)     WALLPAPER_W="${2%%x*}"; WALLPAPER_H="${2##*x}"; shift ;;
@@ -61,7 +64,7 @@ backup() {
   mkdir -p "$BACKUP"
   : > "$BACKUP/.absent"
   local f
-  for f in kdeglobals kwinrc plasmarc konsolerc breezerc \
+  for f in kdeglobals kwinrc plasmarc konsolerc breezerc plasmashellrc \
            plasma-org.kde.plasma.desktop-appletsrc; do
     if [[ -f "$CONF/$f" ]]; then
       cp -a "$CONF/$f" "$BACKUP/$f"
