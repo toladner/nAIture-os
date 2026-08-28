@@ -13,13 +13,10 @@ set -euo pipefail
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 CONF="${XDG_CONFIG_HOME:-$HOME/.config}"
 
-if command -v kvantummanager >/dev/null 2>&1; then
-  mkdir -p "$CONF/Kvantum/Naiture"
-  cp -a "$REPO/kvantum/Naiture/." "$CONF/Kvantum/Naiture/"
-  kwriteconfig6 --file Kvantum/kvantum.kvconfig --group General --key theme Naiture
-  kwriteconfig6 --file kdeglobals --group KDE --key widgetStyle kvantum
-  echo "  widgets -> Kvantum/Naiture, translucent window bodies"
-else
-  kwriteconfig6 --file kdeglobals --group KDE --key widgetStyle Breeze
-  echo "  widgets -> Breeze (opaque bodies; install kvantum for the design's glass)"
-fi
+# NOT YET the design. Kvantum is the only route to a translucent window body,
+# but it repaints the whole widget set from its own SVG, so a naiture Kvantum
+# theme has to be authored first — copying an existing one repaints every window
+# in that theme's colours and still does not switch translucency on. Until that
+# theme exists, Breeze keeps the palette right and window bodies opaque.
+kwriteconfig6 --file kdeglobals --group KDE --key widgetStyle Breeze
+echo "  widgets -> Breeze (opaque bodies; see docs/design-mapping.md)"

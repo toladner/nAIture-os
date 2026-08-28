@@ -38,11 +38,17 @@ window keeps square corners, and `KwinBorderSize`, which Klassy expects to own.
 Klassy's opacity values are ignored unless `OverrideActiveTitleBarOpacity` and
 `OverrideInactiveTitleBarOpacity` are true — the titlebar stays solid otherwise.
 
-The window *body* is painted by the widget style, not the compositor, so
-Kvantum carries it: `kvantum/Naiture` sets `translucent_windows`, `blurring`
-and `reduce_window_opacity=30` for the design's 0.70 body. KWin's own
-`translucency` effect is no substitute — it only acts on inactive windows.
-Without Kvantum the theme still applies; bodies are simply opaque.
+The window *body* is **not** glass yet, and this is the largest remaining gap.
+It is painted by the widget style, not the compositor. Breeze paints it opaque,
+KWin's `translucency` effect only acts on inactive windows, and Klassy's opacity
+stops at the titlebar and toolbar. Konsole is translucent only because its own
+profile sets `Opacity=0.70`.
+
+Kvantum is the one route to a translucent body, but it repaints the entire
+widget set from its own SVG. Copying a shipped Kvantum theme was tried and
+rejected: it recoloured every window in that theme's palette — measured at
+`(64,69,82)` where naiture wants `(13,24,17)` — and did not turn translucency on
+either. Doing it properly means authoring a Kvantum SVG in the naiture palette.
 
 GTK applications (Firefox, Flatpaks) are outside all of this.
 | `0 50px 110px -40px rgba(0,0,0,0.88)` | `breezerc` `ShadowSize=ShadowVeryLarge`, `ShadowStrength=240` |

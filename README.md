@@ -16,7 +16,7 @@ Built and tested on **Fedora 44, Plasma 6.6.4, Wayland**.
 | Plasma theme | `naiture` — same palette for the shell, with background-contrast at the design's `saturate(170%)` |
 | Wallpaper | Generated from the design's own gradient, glows, mist band and 44-blade grass field, at your screen's resolution |
 | Panels | Floating, fit-to-content, 50px islands with adaptive translucency |
-| Windows | 22px rounded corners and translucent titlebars via Klassy, translucent bodies via Kvantum, blur + background contrast. No app icon and no window buttons, as in the design. Falls back to borderless Breeze / opaque Breeze widgets when those are absent. |
+| Windows | 22px rounded corners via Klassy, blur + background contrast, no app icon and no window buttons as in the design. Window bodies are still opaque — see below. |
 | Fonts | Archivo for the UI, JetBrains Mono for anything fixed-width |
 | Konsole | `Naiture` profile and colour scheme, 82% opacity with blur |
 
@@ -117,6 +117,12 @@ a plain gradient.
 * **The dock's hover fade.** The design's switcher is nearly transparent at rest
   and solidifies on hover. Plasma panels have no hover opacity, so the island
   sits at the resting film all the time.
+* **Window bodies are not glass yet.** The design's windows are
+  `rgba(13,24,17,0.70)` throughout. The body is painted by the widget style, and
+  Breeze paints it opaque; KWin's translucency effect only touches inactive
+  windows. Konsole is translucent because its own profile sets it. Closing this
+  properly needs a Kvantum theme authored in the naiture palette.
+
 * **GTK apps.** Firefox, GNOME apps and Flatpaks keep their own theme.
 
 * **No window buttons.** The design has none, so neither does this. Close a
