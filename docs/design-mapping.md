@@ -26,7 +26,8 @@ at their rest position.
 | `rgba(13,24,17,0.7)` body | `Colors:Window BackgroundNormal=13,24,17` — Plasma composites opacity itself |
 | `backdrop-filter: blur(40px) saturate(170%)` | `kwinrc` blur effect (strength 12) + background contrast; `saturation=1.7` in the theme's `plasmarc` |
 | `1px solid rgba(255,255,255,0.18)` | Breeze's own hairline; borders set to `None` so nothing heavier is drawn |
-| `border-radius: 22px` | **not reproducible** with stock Breeze — see the README |
+| `border-radius: 22px` | Klassy's `WindowCornerRadius=22` in `klassyrc`; nothing in stock Plasma clips a window to a radius |
+| `rgba(13,24,17,0.70)` / `0.60` glass | Klassy `ActiveTitleBarOpacity=70` / `InactiveTitleBarOpacity=60` with `ApplyOpacityToHeader`, and `BlurTransparentTitleBars` for the backdrop blur |
 | `0 50px 110px -40px rgba(0,0,0,0.88)` | `breezerc` `ShadowSize=ShadowVeryLarge`, `ShadowStrength=240` |
 | focused vs unfocused opacity (0.70 / 0.60) | `Colors:Header` vs `Colors:Header][Inactive` |
 

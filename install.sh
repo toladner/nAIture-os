@@ -64,7 +64,7 @@ backup() {
   mkdir -p "$BACKUP"
   : > "$BACKUP/.absent"
   local f
-  for f in kdeglobals kwinrc plasmarc konsolerc breezerc plasmashellrc \
+  for f in kdeglobals kwinrc plasmarc konsolerc breezerc plasmashellrc klassyrc \
            plasma-org.kde.plasma.desktop-appletsrc; do
     if [[ -f "$CONF/$f" ]]; then
       cp -a "$CONF/$f" "$BACKUP/$f"
@@ -161,15 +161,8 @@ write_config() {
   $kw --file kwinrc --group Effect-blur --key BlurStrength 12
   $kw --file kwinrc --group Effect-blur --key NoiseStrength 0
 
-  # Window frames: hairline only, no chunky borders (the design uses a 1px
-  # white rule at 18% and lets the shadow do the separating).
-  local decogroup
-  for decogroup in org.kde.kdecoration3 org.kde.kdecoration2; do
-    $kw --file kwinrc --group "$decogroup" --key library org.kde.breeze
-    $kw --file kwinrc --group "$decogroup" --key theme Breeze
-    $kw --file kwinrc --group "$decogroup" --key BorderSize None
-    $kw --file kwinrc --group "$decogroup" --key BorderSizeAuto false
-  done
+  # Window frames are handled by scripts/window-decoration.sh, which picks
+  # Klassy (22px rounded glass) or falls back to borderless Breeze.
   $kw --file breezerc --group Common --key OutlineCloseButton true
   $kw --file breezerc --group Common --key ShadowSize ShadowVeryLarge
   $kw --file breezerc --group Common --key ShadowStrength 240
@@ -247,6 +240,8 @@ apply() {
   else
     bash "$REPO/scripts/panel-style.sh"
   fi
+
+  bash "$REPO/scripts/window-decoration.sh"
 
   if command -v qdbus-qt6 >/dev/null 2>&1; then
     qdbus-qt6 org.kde.KWin /KWin reconfigure >/dev/null 2>&1 || true

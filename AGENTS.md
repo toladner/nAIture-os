@@ -54,6 +54,30 @@ of those did not exist so uninstall can delete rather than restore them.
 Re-running install never overwrites that snapshot. The panel *layout* is not
 rebuilt automatically; uninstall prints the two commands that do it.
 
+## Window corners need Klassy
+
+Nothing in stock Plasma clips a window to a radius.
+`scripts/window-decoration.sh` configures Klassy when it is installed and falls
+back to borderless Breeze when it is not, so the installer is safe either way.
+
+On Fedora, Klassy comes from the `major-tom/klassy` COPR and is built against a
+specific Plasma major version — installing a Klassy newer than the running
+desktop pulls in a **full Plasma upgrade** as dependencies. Check
+`plasmashell --version` against the Klassy build before installing, and tell the
+user what the transaction will actually do.
+
+**Never run a package transaction as a child of a tool call.** A timeout or a
+session teardown kills it mid-write and leaves duplicate, half-installed
+packages — recoverable only with `dnf remove --duplicates`. Detach it:
+
+```bash
+pkexec bash -c 'setsid nohup dnf install -y <pkg> > /tmp/log 2>&1 < /dev/null &'
+```
+
+then poll the log. Match the real process (`pgrep -f 'dnf install'`); `pgrep -x
+dnf` does not match and will report success while the transaction is still
+running.
+
 ## Things that will trip you up
 
 **`sudo` may have no TTY.** In non-interactive shells `sudo` fails with "a

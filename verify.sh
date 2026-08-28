@@ -95,6 +95,19 @@ else
   fi
 fi
 
+# --- window decoration ---
+deco="$(kreadconfig6 --file kwinrc --group org.kde.kdecoration3 --key library 2>/dev/null)"
+if [[ "$deco" == "org.kde.klassy" ]]; then
+  radius="$(kreadconfig6 --file klassyrc --group Common --key WindowCornerRadius 2>/dev/null)"
+  if [[ "$radius" == "22" ]]; then
+    record windows ok "Klassy, 22px corners"
+  else
+    record windows warn "Klassy, corner radius ${radius:-unset} (design is 22)"
+  fi
+else
+  record windows warn "no Klassy — windows have square corners (install it for the design's 22px)"
+fi
+
 # --- konsole ---
 kprofile="$(kreadconfig6 --file konsolerc --group "Desktop Entry" --key DefaultProfile 2>/dev/null)"
 [[ "$kprofile" == "Naiture.profile" ]] \

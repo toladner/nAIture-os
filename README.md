@@ -16,7 +16,7 @@ Built and tested on **Fedora 44, Plasma 6.6.4, Wayland**.
 | Plasma theme | `naiture` — same palette for the shell, with background-contrast at the design's `saturate(170%)` |
 | Wallpaper | Generated from the design's own gradient, glows, mist band and 44-blade grass field, at your screen's resolution |
 | Panels | Floating, fit-to-content, 50px islands with adaptive translucency |
-| Windows | Blur + background contrast on, borderless Breeze frames, very large soft shadows |
+| Windows | 22px rounded glass with translucent titlebars via Klassy, blur + background contrast; falls back to borderless Breeze if Klassy is absent |
 | Fonts | Archivo for the UI, JetBrains Mono for anything fixed-width |
 | Konsole | `Naiture` profile and colour scheme, 82% opacity with blur |
 
@@ -104,11 +104,19 @@ a plain gradient.
 
 ## What this does not do
 
-* **Window corner radius.** The design's windows are 22px rounded glass. Stock
-  Breeze in Plasma 6.6 has no radius setting; the theme gets as close as it can
-  with borderless frames, blur and large shadows. For real rounded corners
-  install [Klassy](https://github.com/paulmcauley/klassy) and set the radius to
-  22.
+* **Window corners need Klassy.** Nothing in stock Plasma clips a window to a
+  radius. `install.sh` configures [Klassy](https://github.com/paulmcauley/klassy)
+  when it is present and falls back to borderless Breeze when it is not. On
+  Fedora it comes from a COPR, and it needs a Plasma of the same major version
+  as your desktop:
+
+  ```bash
+  sudo dnf copr enable -y major-tom/klassy && sudo dnf install -y klassy
+  ```
+
+* **The dock's hover fade.** The design's switcher is nearly transparent at rest
+  and solidifies on hover. Plasma panels have no hover opacity, so the island
+  sits at the resting film all the time.
 * **GTK apps.** Firefox, GNOME apps and Flatpaks keep their own theme.
 * **Login and boot.** SDDM, the Plasma splash and GRUB are untouched.
 

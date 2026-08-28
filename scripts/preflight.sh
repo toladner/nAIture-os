@@ -36,6 +36,7 @@ check qdbus-qt6 optional "the --islands panel layout"
 check systemctl optional "restarting plasmashell so panel changes show"
 check curl      optional "downloading Archivo and JetBrains Mono"
 check python3   optional "rendering the wallpaper at your screen size"
+check klassy-settings optional "22px rounded window corners (else borderless Breeze)"
 
 if command -v python3 >/dev/null 2>&1; then
   if python3 -c 'import PIL' 2>/dev/null; then
