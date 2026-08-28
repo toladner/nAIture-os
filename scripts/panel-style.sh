@@ -19,7 +19,7 @@ APPLETSRC="$CONF/plasma-org.kde.plasma.desktop-appletsrc"
 THICKNESS="${NAITURE_PANEL_THICKNESS:-50}"
 LENGTH_MODE=1     # 0 fill available, 1 fit content, 2 custom
 OPACITY=0         # 0 adaptive, 1 opaque, 2 translucent
-FLOATING=1
+FLOATING=0
 ALIGNMENT=132     # Qt::AlignCenter
 RESTART=1
 declare -A ALIGN_MAP=()
@@ -75,7 +75,7 @@ for id in "${PANELS[@]}"; do
   set_key "$id" panelOpacity    "$OPACITY"
   set_key "$id" floating        "$FLOATING"
   set_key "$id" alignment       "$align"
-  echo "  panel $id -> ${THICKNESS}px, floating, fit-to-content, align $align"
+  echo "  panel $id -> ${THICKNESS}px, flush, fit-to-content, align $align"
 done
 
 # A panel whose only applet is the clock is the design's time pill: show the

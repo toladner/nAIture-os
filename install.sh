@@ -86,6 +86,12 @@ install_assets() {
   mkdir -p "$DATA/plasma/desktoptheme"
   rm -rf "$DATA/plasma/desktoptheme/naiture"
   cp -a "$REPO/desktoptheme/naiture" "$DATA/plasma/desktoptheme/naiture"
+  # The panel background is generated so the glass and opaque variants cannot
+  # drift apart; regenerate in place if Python is available.
+  if command -v python3 >/dev/null 2>&1; then
+    python3 "$REPO/tools/make_panel_svg.py" -d "$DATA/plasma/desktoptheme/naiture" \
+      >/dev/null 2>&1 || true
+  fi
 
   mkdir -p "$DATA/wallpapers"
   rm -rf "$DATA/wallpapers/naiture"
