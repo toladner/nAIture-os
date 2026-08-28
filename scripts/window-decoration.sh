@@ -17,10 +17,16 @@ has_klassy() {
 }
 
 if has_klassy; then
-  # Klassy keeps the same keys under both groups depending on version.
+  # Klassy reads ~/.config/klassy/klassyrc — NOT ~/.config/klassyrc. Writing to
+  # the latter is silently ignored, which looks exactly like the radius not
+  # working. Keys go under both groups; which one is live varies by version.
   for g in Common Windeco; do
-    set_k() { kwriteconfig6 --file klassyrc --group "$g" --key "$1" "$2"; }
+    set_k() { kwriteconfig6 --file klassy/klassyrc --group "$g" --key "$1" "$2"; }
     set_k WindowCornerRadius        "$RADIUS"
+    # Without borders Klassy leaves the corners square unless told otherwise,
+    # and it wants to own the KWin border size itself.
+    set_k RoundAllCornersWhenNoBorders true
+    set_k KwinBorderSize            None
     set_k ActiveTitleBarOpacity     "$ACTIVE_OPACITY"
     set_k InactiveTitleBarOpacity   "$INACTIVE_OPACITY"
     set_k ApplyOpacityToHeader      true
@@ -30,6 +36,7 @@ if has_klassy; then
     set_k DrawTitleBarSeparator     false
     set_k DrawBackgroundGradient    false
     set_k ThinWindowOutlineThickness 1
+    set_k TitleAlignment            AlignCenterFullWidth
   done
   library=org.kde.klassy
   theme=Klassy
@@ -45,6 +52,11 @@ for g in org.kde.kdecoration3 org.kde.kdecoration2; do
   kwriteconfig6 --file kwinrc --group "$g" --key theme "$theme"
   kwriteconfig6 --file kwinrc --group "$g" --key BorderSize None
   kwriteconfig6 --file kwinrc --group "$g" --key BorderSizeAuto false
+  # The design's windows carry no app icon in the titlebar — the title sits
+  # centred on its own. Letters are KDecoration button codes: M enu, I minimise,
+  # A maximise, X close.
+  kwriteconfig6 --file kwinrc --group "$g" --key ButtonsOnLeft ""
+  kwriteconfig6 --file kwinrc --group "$g" --key ButtonsOnRight "IAX"
 done
 
 command -v qdbus-qt6 >/dev/null 2>&1 && qdbus-qt6 org.kde.KWin /KWin reconfigure >/dev/null 2>&1 || true

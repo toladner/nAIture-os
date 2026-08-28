@@ -28,6 +28,19 @@ at their rest position.
 | `1px solid rgba(255,255,255,0.18)` | Breeze's own hairline; borders set to `None` so nothing heavier is drawn |
 | `border-radius: 22px` | Klassy's `WindowCornerRadius=22` in `klassyrc`; nothing in stock Plasma clips a window to a radius |
 | `rgba(13,24,17,0.70)` / `0.60` glass | Klassy `ActiveTitleBarOpacity=70` / `InactiveTitleBarOpacity=60` with `ApplyOpacityToHeader`, and `BlurTransparentTitleBars` for the backdrop blur |
+| no app icon, title centred | `ButtonsOnLeft=""` in `kwinrc`, `TitleAlignment=AlignCenterFullWidth` in Klassy |
+
+Klassy's settings live in **`~/.config/klassy/klassyrc`**, not `~/.config/klassyrc`.
+Writing to the latter is accepted and silently ignored. Two keys matter beyond
+the radius: `RoundAllCornersWhenNoBorders=true`, without which a borderless
+window keeps square corners, and `KwinBorderSize`, which Klassy expects to own.
+
+How translucent a window body looks is up to the application, not the
+compositor. Klassy's opacity reaches the titlebar and, with
+`ApplyOpacityToHeader`, the toolbar below it; Konsole's own `Opacity=0.70`
+covers the terminal. Other applications draw their own opaque backgrounds, and
+KWin's `translucency` effect only acts on inactive windows, so it cannot stand
+in. Closing that gap for Qt applications generally would need Kvantum.
 | `0 50px 110px -40px rgba(0,0,0,0.88)` | `breezerc` `ShadowSize=ShadowVeryLarge`, `ShadowStrength=240` |
 | focused vs unfocused opacity (0.70 / 0.60) | `Colors:Header` vs `Colors:Header][Inactive` |
 

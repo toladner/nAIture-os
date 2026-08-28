@@ -64,9 +64,10 @@ backup() {
   mkdir -p "$BACKUP"
   : > "$BACKUP/.absent"
   local f
-  for f in kdeglobals kwinrc plasmarc konsolerc breezerc plasmashellrc klassyrc \
+  for f in kdeglobals kwinrc plasmarc konsolerc breezerc plasmashellrc klassy/klassyrc \
            plasma-org.kde.plasma.desktop-appletsrc; do
     if [[ -f "$CONF/$f" ]]; then
+      mkdir -p "$(dirname "$BACKUP/$f")"
       cp -a "$CONF/$f" "$BACKUP/$f"
     else
       # naiture is about to create this file; record that it did not exist so

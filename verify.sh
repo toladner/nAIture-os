@@ -98,7 +98,7 @@ fi
 # --- window decoration ---
 deco="$(kreadconfig6 --file kwinrc --group org.kde.kdecoration3 --key library 2>/dev/null)"
 if [[ "$deco" == "org.kde.klassy" ]]; then
-  radius="$(kreadconfig6 --file klassyrc --group Common --key WindowCornerRadius 2>/dev/null)"
+  radius="$(kreadconfig6 --file klassy/klassyrc --group Common --key WindowCornerRadius 2>/dev/null)"
   if [[ "$radius" == "22" ]]; then
     record windows ok "Klassy, 22px corners"
   else

@@ -66,6 +66,13 @@ desktop pulls in a **full Plasma upgrade** as dependencies. Check
 `plasmashell --version` against the Klassy build before installing, and tell the
 user what the transaction will actually do.
 
+**Klassy reads `~/.config/klassy/klassyrc`.** Not `~/.config/klassyrc` — that
+path is accepted and silently ignored, which looks exactly like the corner
+radius having no effect. Confirm what KWin actually loaded with
+`qdbus-qt6 org.kde.KWin /KWin org.kde.KWin.supportInformation | grep -A3 Decoration`
+before concluding anything about the settings. `RoundAllCornersWhenNoBorders`
+must be true or a borderless window keeps square corners.
+
 **Never run a package transaction as a child of a tool call.** A timeout or a
 session teardown kills it mid-write and leaves duplicate, half-installed
 packages — recoverable only with `dnf remove --duplicates`. Detach it:

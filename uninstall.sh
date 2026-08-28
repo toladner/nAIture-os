@@ -13,11 +13,12 @@ say()  { printf '\033[38;2;106;191;217m::\033[0m %s\n' "$*"; }
 warn() { printf '\033[38;2;222;204;96m!!\033[0m %s\n' "$*" >&2; }
 
 if [[ -d "$BACKUP" ]]; then
-  for f in "$BACKUP"/*; do
-    name="$(basename "$f")"
+  while IFS= read -r f; do
+    name="${f#$BACKUP/}"
     [[ "$name" == .* ]] && continue
+    mkdir -p "$(dirname "$CONF/$name")"
     cp -a "$f" "$CONF/$name"
-  done
+  done < <(find "$BACKUP" -type f ! -name '.*')
   say "restored config from $BACKUP (taken $(cat "$BACKUP/.taken-at" 2>/dev/null || echo 'unknown'))"
 
   # Files naiture created that were not there before it go away entirely —
