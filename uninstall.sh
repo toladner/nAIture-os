@@ -19,6 +19,16 @@ if [[ -d "$BACKUP" ]]; then
     cp -a "$f" "$CONF/$name"
   done
   say "restored config from $BACKUP (taken $(cat "$BACKUP/.taken-at" 2>/dev/null || echo 'unknown'))"
+
+  # Files naiture created that were not there before it go away entirely —
+  # restoring the others would otherwise leave these still pointing at naiture.
+  if [[ -f "$BACKUP/.absent" ]]; then
+    while read -r name; do
+      [[ -n "$name" && -f "$CONF/$name" ]] || continue
+      rm -f "$CONF/$name"
+      say "removed $name (did not exist before naiture)"
+    done < "$BACKUP/.absent"
+  fi
 else
   warn "no backup at $BACKUP — falling back to Breeze Dark defaults"
   kwriteconfig6 --file plasmarc  --group Theme   --key name breeze-dark

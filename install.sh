@@ -59,10 +59,17 @@ backup() {
     return
   fi
   mkdir -p "$BACKUP"
+  : > "$BACKUP/.absent"
   local f
   for f in kdeglobals kwinrc plasmarc konsolerc breezerc \
            plasma-org.kde.plasma.desktop-appletsrc; do
-    [[ -f "$CONF/$f" ]] && cp -a "$CONF/$f" "$BACKUP/$f"
+    if [[ -f "$CONF/$f" ]]; then
+      cp -a "$CONF/$f" "$BACKUP/$f"
+    else
+      # naiture is about to create this file; record that it did not exist so
+      # uninstall can remove it rather than leaving a half-themed config behind.
+      echo "$f" >> "$BACKUP/.absent"
+    fi
   done
   date -Iseconds > "$BACKUP/.taken-at"
   say "backed up current settings to $BACKUP"
@@ -237,7 +244,12 @@ apply() {
 }
 
 # ------------------------------------------------------------------ main ----
-need kwriteconfig6 || exit 1
+if [[ -x "$REPO/scripts/preflight.sh" ]]; then
+  say "checking prerequisites"
+  "$REPO/scripts/preflight.sh" --quiet || exit 1
+else
+  need kwriteconfig6 || exit 1
+fi
 
 backup
 install_assets

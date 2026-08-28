@@ -22,10 +22,23 @@ Built and tested on **Fedora 44, Plasma 6.6.4, Wayland**.
 
 ## Install
 
+One command, no root:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/toladner/nAIture-os/main/bootstrap.sh | bash
+```
+
+Add `bash -s -- --islands` to get the two-island panel layout as well.
+
+If you would rather read the script before running it — reasonable — do it in
+two steps:
+
 ```bash
 git clone https://github.com/toladner/nAIture-os.git
-cd naiture
+cd nAIture-os
+./scripts/preflight.sh    # what's missing, and the command to get it
 ./install.sh
+./verify.sh               # exits 0 only if everything applied
 ```
 
 The first run snapshots `kdeglobals`, `kwinrc`, `plasmarc`, `konsolerc`,
@@ -43,6 +56,13 @@ affected, the panel just blinks.
 | `--no-fonts` | Skip downloading Archivo / JetBrains Mono |
 | `--no-apply` | Write everything, change nothing in the running session |
 | `--size WxH` | Render the wallpaper at a specific size instead of your screen's |
+
+## Checking it worked
+
+```bash
+./verify.sh          # human-readable
+./verify.sh --json   # {"ok": bool, "checks": {...}}, exit 1 on any failure
+```
 
 ## Uninstall
 
@@ -95,13 +115,18 @@ a plain gradient.
 ## Layout
 
 ```
+bootstrap.sh       one-command install: clone, preflight, install, verify
+install.sh         the installer
+uninstall.sh       restore the pre-naiture snapshot
+verify.sh          assert the theme is applied
+AGENTS.md          how to drive this repo from an AI agent
 color-schemes/     Plasma colour scheme
 desktoptheme/      Plasma shell theme (colours + contrast effect)
 wallpapers/        KPackage wallpaper, pre-rendered at three sizes
 konsole/           Konsole colour scheme and profile
 fonts/             per-user font installer
 tools/             OKLCH conversion, wallpaper renderer
-scripts/           panel styling and the islands layout
+scripts/           preflight check, panel styling, the islands layout
 design/            the source design canvas, extracted from the artifact
 palette/           the design tokens, OKLCH + sRGB
 ```
