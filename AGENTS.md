@@ -215,9 +215,15 @@ rectangle drawn inside only puts fake corners in a square box. A
 **The island cannot reach the screen's corner.** Plasma insets an applet from
 the panel edge by the theme background's `hint-*-margin` *plus* about 8px of its
 own — paint an applet solid and read off where it ends — and no theme setting
-reaches the remainder. `scripts/screen-edges.sh` gives the bottom-right screen
-edge the show-desktop action, which does reach the corner; the sliver stays a
-quiet click target just inside it.
+reaches the remainder. `tools/make_panel_svg.py` therefore keeps `SIDE_MARGIN`
+as small as the rounded corner allows. Applets are **not clipped**, though, so a
+child may be given a negative margin to reach back out to the island's edge —
+that is how the clock's accent bar sits on the island's top rather than 7px
+inside it.
+
+`scripts/screen-edges.sh` quiets both screen corners, because an action that
+fires on a shove of the pointer is easy to trigger by accident with the island's
+controls down there.
 
 `plasmoids/org.naiture.showdesktop` is the sliver at the screen's corner that
 peeks at the desktop. It is a separate applet on purpose: Plasma draws its

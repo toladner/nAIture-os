@@ -1,31 +1,34 @@
 #!/usr/bin/env bash
-# Give the bottom-right screen corner the show-desktop action.
+# Quiet the screen corners.
 #
-#   --off   put the corner back to doing nothing
+#   --restore   put KWin's own corner behaviour back
 #
-# The island's show-desktop sliver cannot reach the corner: Plasma insets an
-# applet from the panel's edge by the theme's background margin plus about 8px
-# of its own, and nothing in a theme reaches that. A KWin screen edge does reach
-# it — that is what a screen edge is — so throwing the pointer into the corner
-# works even though the last few pixels are not the applet's to claim.
+# Two corners do something by default or by our doing, and both fire on a shove
+# of the pointer rather than a click, which is easy to trigger by accident when
+# the island's controls live down there:
 #
-# It fires on a deliberate shove into the corner rather than a click; KWin's
-# ElectricBorderDelay is the dwell before it counts, and is left at whatever the
-# user has set.
+#   bottom-right  [ElectricBorders] BottomRight — naiture briefly put show
+#                 desktop here, because the island's sliver cannot quite reach
+#                 the corner. Clicking the sliver is the affordance instead.
+#   top-left      KWin's Overview effect claims this corner out of the box
+#                 ([Effect-overview] BorderActivate). 9 is ElectricNone in
+#                 KWin's ElectricBorder enum (kwin/src/effect/globals.h).
 set -euo pipefail
 
-if [[ "${1:-}" == "--off" ]]; then
-  kwriteconfig6 --file kwinrc --group ElectricBorders --key BottomRight None
+ELECTRIC_NONE=9
+
+if [[ "${1:-}" == "--restore" ]]; then
+  kwriteconfig6 --file kwinrc --group ElectricBorders --key BottomRight --delete
+  kwriteconfig6 --file kwinrc --group Effect-overview --key BorderActivate --delete
+  kwriteconfig6 --file kwinrc --group Effect-overview --key BorderActivateAll --delete
+  echo "  screen corners -> KWin's defaults"
 else
-  kwriteconfig6 --file kwinrc --group ElectricBorders --key BottomRight ShowDesktop
+  kwriteconfig6 --file kwinrc --group ElectricBorders --key BottomRight None
+  kwriteconfig6 --file kwinrc --group Effect-overview --key BorderActivate "$ELECTRIC_NONE"
+  kwriteconfig6 --file kwinrc --group Effect-overview --key BorderActivateAll "$ELECTRIC_NONE"
+  echo "  screen corners -> nothing happens there"
 fi
 
 if command -v qdbus-qt6 >/dev/null 2>&1; then
   qdbus-qt6 org.kde.KWin /KWin reconfigure >/dev/null 2>&1 || true
-fi
-
-if [[ "${1:-}" == "--off" ]]; then
-  echo "  bottom-right corner -> nothing"
-else
-  echo "  bottom-right corner -> show desktop"
 fi

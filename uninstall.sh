@@ -37,7 +37,7 @@ else
 fi
 
 bash "$(dirname "${BASH_SOURCE[0]}")/scripts/dock-proximity.sh" --off >/dev/null 2>&1 || true
-bash "$(dirname "${BASH_SOURCE[0]}")/scripts/screen-edges.sh" --off >/dev/null 2>&1 || true
+bash "$(dirname "${BASH_SOURCE[0]}")/scripts/screen-edges.sh" --restore >/dev/null 2>&1 || true
 
 rm -f  "$DATA/color-schemes/Naiture.colors"
 rm -rf "$DATA/plasma/desktoptheme/naiture"

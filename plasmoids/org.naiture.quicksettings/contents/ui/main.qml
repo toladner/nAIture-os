@@ -206,8 +206,13 @@ PlasmoidItem {
 
         // Plasma's own open-applet marker rides on Plasmoid.expanded, which
         // this applet does not use; this is the same bar, drawn here.
+        //
+        // It belongs to the island's edge rather than to the applet, so it
+        // reaches back out through the panel background's top margin. Panel
+        // applets are not clipped, so a child may sit outside them.
         Rectangle {
             anchors.top: parent.top
+            anchors.topMargin: -Tokens.islandTopMargin
             anchors.left: parent.left
             anchors.right: parent.right
             height: 3
@@ -251,214 +256,246 @@ PlasmoidItem {
         backgroundHints: PlasmaCore.Dialog.NoBackground
         hideOnWindowDeactivate: true
 
+        // Plasma places a dialog a little in from the screen's edge, and the
+        // design has the island flush with it. Re-place the window once Plasma
+        // has finished positioning and sizing it; callLater is what waits for
+        // that.
+        onVisibleChanged: if (visible) {
+            Qt.callLater(placeSheet);
+        }
+
+        function placeSheet() {
+            const output = sheetDialog.screen;
+            if (!output) {
+                return;
+            }
+            sheetDialog.x = output.virtualX + output.width - sheetDialog.width;
+        }
+
         // The dialog sizes itself from mainItem's *implicit* size and then
         // assigns the real one back, so the item must not try to set its own
         // width and height — and the content inside must not be anchored to it
         // either, or the implicit height is a loop and the dialog falls back to
         // its default 400x300.
-        mainItem: Rectangle {
-            id: sheet
-
-            implicitWidth: Tokens.sheetWidth
+        // The window carries a strip of nothing under the sheet and to its
+        // right: that is what lifts the sheet clear of the island instead of
+        // resting it on top, and what lets the window run to the screen's edge
+        // while the sheet keeps a hair of daylight.
+        mainItem: Item {
+            // Sized from constants and the content, never from the child
+            // Rectangle: the dialog reads this implicit size early, and a
+            // binding that has to wait for a child resolves to 0 first, which
+            // the dialog keeps — a 0x0 window that never appears.
+            implicitWidth: Tokens.sheetWidth + Tokens.sheetEdgeGap
             implicitHeight: content.implicitHeight + Tokens.sheetPadY * 2
+                + Tokens.sheetLift
 
-            radius: Tokens.sheetRadius
-            color: Tokens.sheet
-            border.width: 1
-            border.color: Tokens.sheetBorder
+            Rectangle {
+                id: sheet
 
-            ColumnLayout {
-                id: content
+                anchors.top: parent.top
+                anchors.left: parent.left
+                width: Tokens.sheetWidth
+                height: content.implicitHeight + Tokens.sheetPadY * 2
 
-                x: Tokens.sheetPadX
-                y: Tokens.sheetPadY
-                width: sheet.width - Tokens.sheetPadX * 2
-                spacing: Tokens.sectionGap
+                radius: Tokens.sheetRadius
+                color: Tokens.sheet
+                border.width: 1
+                border.color: Tokens.sheetBorder
 
-                // Header: the date and what the machine is connected to, with the
-                // time repeated large on the right.
-                RowLayout {
-                    Layout.fillWidth: true
-                    spacing: 16
+                ColumnLayout {
+                    id: content
+
+                    x: Tokens.sheetPadX
+                    y: Tokens.sheetPadY
+                    width: sheet.width - Tokens.sheetPadX * 2
+                    spacing: Tokens.sectionGap
+
+                    // Header: the date and what the machine is connected to, with the
+                    // time repeated large on the right.
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 16
+
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            spacing: 3
+
+                            PC3.Label {
+                                Layout.fillWidth: true
+                                elide: Text.ElideRight
+                                text: Qt.formatDate(clock.now, "dddd d MMMM")
+                                font.pointSize: Tokens.pt(14.5)
+                                font.weight: Font.DemiBold
+                                color: Tokens.text
+                            }
+
+                            PC3.Label {
+                                Layout.fillWidth: true
+                                elide: Text.ElideRight
+                                text: {
+                                    const parts = [];
+                                    if (root.wifiOn && wirelessStatus.wifiSSID) {
+                                        parts.push(wirelessStatus.wifiSSID);
+                                    }
+                                    if (root.bluetoothConnected > 0) {
+                                        parts.push(i18np("%1 device", "%1 devices",
+                                                         root.bluetoothConnected));
+                                    }
+                                    return parts.length ? parts.join(" · ")
+                                                        : i18n("Not connected");
+                                }
+                                font.pointSize: Tokens.pt(11.5)
+                                color: Tokens.textDim
+                            }
+                        }
+
+                        // The design set this in mono at 18px against a 14.5px
+                        // date; in one typeface that reads as a mismatch rather
+                        // than a contrast, so the two now share a size and weight.
+                        PC3.Label {
+                            text: root.timeText
+                            font.pointSize: Tokens.pt(14.5)
+                            font.weight: Font.DemiBold
+                            font.features: ({ "tnum": 1 })
+                            color: Tokens.text
+                        }
+                    }
+
+                    GridLayout {
+                        Layout.fillWidth: true
+                        columns: 2
+                        columnSpacing: Tokens.tileGap
+                        rowSpacing: Tokens.tileGap
+
+                        QuickTile {
+                            Layout.fillWidth: true
+                            accent: root.accent
+                            glyph: "≋"
+                            name: i18n("Wi-Fi")
+                            available: availableDevices.wirelessDeviceAvailable
+                            on: root.wifiOn
+                            detail: !available ? i18n("No adapter")
+                                  : !on ? i18n("Off")
+                                  : (wirelessStatus.wifiSSID || i18n("Not connected"))
+                            onToggled: networkHandler.enableWireless(!root.wifiOn)
+                        }
+
+                        QuickTile {
+                            Layout.fillWidth: true
+                            accent: root.accent
+                            glyph: "✳"
+                            name: i18n("Bluetooth")
+                            available: !!root.btAdapter
+                            on: root.bluetoothOn
+                            detail: !available ? i18n("No adapter")
+                                  : !on ? i18n("Off")
+                                  : root.bluetoothConnected > 0
+                                    ? i18np("%1 device", "%1 devices", root.bluetoothConnected)
+                                    : i18n("No devices")
+                            onToggled: root.btAdapter.powered = !root.bluetoothOn
+                        }
+
+                        QuickTile {
+                            Layout.fillWidth: true
+                            accent: root.accent
+                            glyph: "◑"
+                            iconName: !root.soundOn ? "audio-volume-muted-symbolic"
+                                    : root.volumeRatio > 0.65 ? "audio-volume-high-symbolic"
+                                    : root.volumeRatio > 0.25 ? "audio-volume-medium-symbolic"
+                                    : "audio-volume-low-symbolic"
+                            name: i18n("Sound")
+                            available: !!root.sink
+                            on: root.soundOn
+                            detail: !available ? i18n("No output")
+                                  : !on ? i18n("Muted")
+                                  : Math.round(root.volumeRatio * 100) + "%"
+                            onToggled: root.sink.muted = !root.sink.muted
+                        }
+
+
+
+                        QuickTile {
+                            Layout.fillWidth: true
+                            accent: root.accent
+                            glyph: "☀"
+                            name: i18n("Night light")
+                            on: root.nightLightOn
+                            detail: root.nightLightOn ? i18n("Follows sun") : i18n("Paused")
+                            onToggled: BrightnessControl.NightLightInhibitor.toggleInhibition()
+                        }
+                    }
 
                     ColumnLayout {
                         Layout.fillWidth: true
-                        spacing: 3
+                        spacing: Tokens.sliderGap
 
-                        PC3.Label {
+                        QuickSlider {
                             Layout.fillWidth: true
-                            elide: Text.ElideRight
-                            text: Qt.formatDate(clock.now, "dddd d MMMM")
-                            font.pointSize: Tokens.pt(14.5)
-                            font.weight: Font.DemiBold
-                            color: Tokens.text
-                        }
-
-                        PC3.Label {
-                            Layout.fillWidth: true
-                            elide: Text.ElideRight
-                            text: {
-                                const parts = [];
-                                if (root.wifiOn && wirelessStatus.wifiSSID) {
-                                    parts.push(wirelessStatus.wifiSSID);
-                                }
-                                if (root.bluetoothConnected > 0) {
-                                    parts.push(i18np("%1 device", "%1 devices",
-                                                     root.bluetoothConnected));
-                                }
-                                return parts.length ? parts.join(" · ")
-                                                    : i18n("Not connected");
+                            name: i18n("Volume")
+                            tint: root.accent
+                            // The same icon Plasma's own volume applet picks.
+                            iconName: !root.soundOn ? "audio-volume-muted-symbolic"
+                                    : root.volumeRatio > 0.65 ? "audio-volume-high-symbolic"
+                                    : root.volumeRatio > 0.25 ? "audio-volume-medium-symbolic"
+                                    : "audio-volume-low-symbolic"
+                            iconIsButton: true
+                            onIconActivated: if (root.sink) {
+                                root.sink.muted = !root.sink.muted;
                             }
-                            font.pointSize: Tokens.pt(11.5)
-                            color: Tokens.textDim
+                            available: !!root.sink
+                            value: root.volumeRatio
+                            onMoved: ratio => {
+                                root.sink.muted = false;
+                                root.sink.volume = Math.round(ratio * Volume.PulseAudio.NormalVolume);
+                            }
+                        }
+
+                        QuickSlider {
+                            Layout.fillWidth: true
+                            name: i18n("Brightness")
+                            tint: root.accent
+                            iconName: root.brightnessRatio > 0.5 ? "brightness-high-symbolic"
+                                                                 : "brightness-low-symbolic"
+                            available: screenBrightness.isBrightnessAvailable
+                            value: root.brightnessRatio
+                            onMoved: ratio => root.setBrightness(ratio)
                         }
                     }
 
-                    // The design set this in mono at 18px against a 14.5px
-                    // date; in one typeface that reads as a mismatch rather
-                    // than a contrast, so the two now share a size and weight.
-                    PC3.Label {
-                        text: root.timeText
-                        font.pointSize: Tokens.pt(14.5)
-                        font.weight: Font.DemiBold
-                        font.features: ({ "tnum": 1 })
-                        color: Tokens.text
-                    }
-                }
+                    // The sheet covers the handful of things worth a click; everything
+                    // else lives one step further in.
+                    Kirigami.Icon {
+                        Layout.alignment: Qt.AlignRight
+                        Layout.preferredWidth: Kirigami.Units.iconSizes.small
+                        Layout.preferredHeight: Kirigami.Units.iconSizes.small
 
-                GridLayout {
-                    Layout.fillWidth: true
-                    columns: 2
-                    columnSpacing: Tokens.tileGap
-                    rowSpacing: Tokens.tileGap
+                        source: "applications-system-symbolic"
+                        opacity: settingsHover.containsMouse ? 1 : 0.45
 
-                    QuickTile {
-                        Layout.fillWidth: true
-                        accent: root.accent
-                        glyph: "≋"
-                        name: i18n("Wi-Fi")
-                        available: availableDevices.wirelessDeviceAvailable
-                        on: root.wifiOn
-                        detail: !available ? i18n("No adapter")
-                              : !on ? i18n("Off")
-                              : (wirelessStatus.wifiSSID || i18n("Not connected"))
-                        onToggled: networkHandler.enableWireless(!root.wifiOn)
-                    }
-
-                    QuickTile {
-                        Layout.fillWidth: true
-                        accent: root.accent
-                        glyph: "✳"
-                        name: i18n("Bluetooth")
-                        available: !!root.btAdapter
-                        on: root.bluetoothOn
-                        detail: !available ? i18n("No adapter")
-                              : !on ? i18n("Off")
-                              : root.bluetoothConnected > 0
-                                ? i18np("%1 device", "%1 devices", root.bluetoothConnected)
-                                : i18n("No devices")
-                        onToggled: root.btAdapter.powered = !root.bluetoothOn
-                    }
-
-                    QuickTile {
-                        Layout.fillWidth: true
-                        accent: root.accent
-                        glyph: "◑"
-                        iconName: !root.soundOn ? "audio-volume-muted-symbolic"
-                                : root.volumeRatio > 0.65 ? "audio-volume-high-symbolic"
-                                : root.volumeRatio > 0.25 ? "audio-volume-medium-symbolic"
-                                : "audio-volume-low-symbolic"
-                        name: i18n("Sound")
-                        available: !!root.sink
-                        on: root.soundOn
-                        detail: !available ? i18n("No output")
-                              : !on ? i18n("Muted")
-                              : Math.round(root.volumeRatio * 100) + "%"
-                        onToggled: root.sink.muted = !root.sink.muted
-                    }
-
-
-
-                    QuickTile {
-                        Layout.fillWidth: true
-                        accent: root.accent
-                        glyph: "☀"
-                        name: i18n("Night light")
-                        on: root.nightLightOn
-                        detail: root.nightLightOn ? i18n("Follows sun") : i18n("Paused")
-                        onToggled: BrightnessControl.NightLightInhibitor.toggleInhibition()
-                    }
-                }
-
-                ColumnLayout {
-                    Layout.fillWidth: true
-                    spacing: Tokens.sliderGap
-
-                    QuickSlider {
-                        Layout.fillWidth: true
-                        name: i18n("Volume")
-                        tint: root.accent
-                        // The same icon Plasma's own volume applet picks.
-                        iconName: !root.soundOn ? "audio-volume-muted-symbolic"
-                                : root.volumeRatio > 0.65 ? "audio-volume-high-symbolic"
-                                : root.volumeRatio > 0.25 ? "audio-volume-medium-symbolic"
-                                : "audio-volume-low-symbolic"
-                        iconIsButton: true
-                        onIconActivated: if (root.sink) {
-                            root.sink.muted = !root.sink.muted;
-                        }
-                        available: !!root.sink
-                        value: root.volumeRatio
-                        onMoved: ratio => {
-                            root.sink.muted = false;
-                            root.sink.volume = Math.round(ratio * Volume.PulseAudio.NormalVolume);
-                        }
-                    }
-
-                    QuickSlider {
-                        Layout.fillWidth: true
-                        name: i18n("Brightness")
-                        tint: root.accent
-                        iconName: root.brightnessRatio > 0.5 ? "brightness-high-symbolic"
-                                                             : "brightness-low-symbolic"
-                        available: screenBrightness.isBrightnessAvailable
-                        value: root.brightnessRatio
-                        onMoved: ratio => root.setBrightness(ratio)
-                    }
-                }
-
-                // The sheet covers the handful of things worth a click; everything
-                // else lives one step further in.
-                Kirigami.Icon {
-                    Layout.alignment: Qt.AlignRight
-                    Layout.preferredWidth: Kirigami.Units.iconSizes.small
-                    Layout.preferredHeight: Kirigami.Units.iconSizes.small
-
-                    source: "applications-system-symbolic"
-                    opacity: settingsHover.containsMouse ? 1 : 0.45
-
-                    Behavior on opacity {
-                        NumberAnimation { duration: 150 }
-                    }
-
-                    MouseArea {
-                        id: settingsHover
-
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-
-                        // KCMLauncher.openSystemSettings takes a module name and
-                        // has no no-argument overload; calling it bare is a
-                        // TypeError that a signal handler swallows in silence.
-                        onClicked: {
-                            sheetDialog.visible = false;
-                            KCMUtils.KCMLauncher.openSystemSettings("kcm_landingpage");
+                        Behavior on opacity {
+                            NumberAnimation { duration: 150 }
                         }
 
-                        PlasmaCore.ToolTipArea {
+                        MouseArea {
+                            id: settingsHover
+
                             anchors.fill: parent
-                            mainText: i18n("All settings")
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+
+                            // KCMLauncher.openSystemSettings takes a module name and
+                            // has no no-argument overload; calling it bare is a
+                            // TypeError that a signal handler swallows in silence.
+                            onClicked: {
+                                sheetDialog.visible = false;
+                                KCMUtils.KCMLauncher.openSystemSettings("kcm_landingpage");
+                            }
+
+                            PlasmaCore.ToolTipArea {
+                                anchors.fill: parent
+                                mainText: i18n("All settings")
+                            }
                         }
                     }
                 }

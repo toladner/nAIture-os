@@ -30,6 +30,12 @@ GAP = 4            # keeps slices from bleeding into each other
 # terminal, and the padding is scaled with them to keep the ratio.
 MARGIN = 7
 
+# Sideways the islands want as little as possible: the right-hand one is flush
+# with the screen and every pixel of padding is dead space between the last
+# control and the edge. Plasma keeps about 8px of its own beyond this, so this
+# is only part of the gap.
+SIDE_MARGIN = 2
+
 COLS = [0, TILE + GAP, 2 * (TILE + GAP)]
 ROWS = COLS
 W = COLS[2] + TILE
@@ -73,7 +79,7 @@ def build(fill, opacity, hair):
     o += group("bottom", [rect(COLS[1], ROWS[2])])
     o += group("bottomright", [rect(COLS[2], ROWS[2])])
 
-    o += hints("", COLS, ROWS, TILE, (MARGIN, MARGIN, MARGIN, MARGIN))
+    o += hints("", COLS, ROWS, TILE, (MARGIN, MARGIN, SIDE_MARGIN, SIDE_MARGIN))
     o.append("</svg>")
     return "\n".join(o) + "\n"
 

@@ -27,13 +27,16 @@ TILE = 11          # corner size, also the radius
 GAP = 3
 BAR = 3            # the accent bar on the focused tile
 
+# State is carried by the accent bar, not by a box behind the icon: a tile that
+# lights up grey on hover and stays grey while focused reads as chrome, and the
+# design's dock marks the active window with a coloured rule instead.
 SETS = {
-    # prefix:      (fill,      fill opacity, stroke opacity, accent bar class)
-    "normal":      ("#ffffff", 0.04, 0.08, None),
-    "minimized":   ("#ffffff", 0.06, 0.10, None),
-    "hover":       ("#ffffff", 0.14, 0.18, None),
-    "focus":       ("#ffffff", 0.20, 0.26, "ColorScheme-Highlight"),
-    "attention":   ("#ffffff", 0.22, 0.40, "ColorScheme-NeutralText"),
+    # prefix:      (fill,      fill opacity, stroke opacity, bar class,                bar opacity)
+    "normal":      ("#ffffff", 0.00, 0.00, None,                     0),
+    "minimized":   ("#ffffff", 0.04, 0.06, "ColorScheme-Highlight",  0.25),
+    "hover":       ("#ffffff", 0.00, 0.00, "ColorScheme-Highlight",  0.5),
+    "focus":       ("#ffffff", 0.00, 0.00, "ColorScheme-Highlight",  1),
+    "attention":   ("#ffffff", 0.00, 0.00, "ColorScheme-NeutralText", 1),
 }
 
 # Fallbacks, replaced wholesale by KSvg with the running colour scheme's values.
@@ -45,7 +48,7 @@ SCHEME_DEFAULTS = {
 BLOCK = 3 * TILE + 2 * GAP + GAP * 2   # one 3x3 set plus breathing room
 
 
-def bar_corner(x, y, corner, cls):
+def bar_corner(x, y, corner, cls, opacity):
     """The accent bar's share of a rounded corner slice.
 
     The corner slice is the full radius, so a plain rectangle would spill
@@ -60,10 +63,11 @@ def bar_corner(x, y, corner, cls):
     sweep = 0 if left else 1
     d = (f"M {ix},{y} A {r},{r} 0 0 {sweep} {ex:.3f},{y + BAR} "
          f"L {ix},{y + BAR} Z")
-    return f'<path d="{d}" fill="currentColor" class="{cls}" />'
+    return (f'<path d="{d}" fill="currentColor" class="{cls}" '
+            f'fill-opacity="{opacity}" />')
 
 
-def build_set(prefix, ox, fill, opacity, hair, accent):
+def build_set(prefix, ox, fill, opacity, hair, accent, bar_opacity):
     cols = [ox, ox + TILE + GAP, ox + 2 * (TILE + GAP)]
     rows = [0, TILE + GAP, 2 * (TILE + GAP)]
     out = []
@@ -75,7 +79,7 @@ def build_set(prefix, ox, fill, opacity, hair, accent):
         parts = [fill_path(quarter_disc(x, y, TILE, which), fill, opacity),
                  quarter_hairline(x, y, TILE, which, hair)]
         if accent and which.startswith("top"):
-            parts.append(bar_corner(x, y, which, accent))
+            parts.append(bar_corner(x, y, which, accent, bar_opacity))
         return group(f"{prefix}-{eid}", parts)
 
     out += corner("topleft", cols[0], rows[0], "topleft")
@@ -83,7 +87,8 @@ def build_set(prefix, ox, fill, opacity, hair, accent):
            stroke(f"M {cols[1]},{rows[0] + 0.5} L {cols[1] + TILE},{rows[0] + 0.5}", hair)]
     if accent:
         top.append(f'<rect x="{cols[1]}" y="{rows[0]}" width="{TILE}" '
-                   f'height="{BAR}" fill="currentColor" class="{accent}" />')
+                   f'height="{BAR}" fill="currentColor" class="{accent}" '
+                   f'fill-opacity="{bar_opacity}" />')
     out += group(f"{prefix}-top", top)
     out += corner("topright", cols[2], rows[0], "topright")
 
@@ -122,8 +127,8 @@ def main():
     for cls, value in SCHEME_DEFAULTS.items():
         body.append(f"    .{cls} {{ color: {value}; }}")
     body.append("  </style>")
-    for i, (prefix, (fill, opacity, hair, accent)) in enumerate(SETS.items()):
-        body += build_set(prefix, i * BLOCK + GAP, fill, opacity, hair, accent)
+    for i, (prefix, (fill, opacity, hair, accent, bar)) in enumerate(SETS.items()):
+        body += build_set(prefix, i * BLOCK + GAP, fill, opacity, hair, accent, bar)
     body.append("</svg>")
 
     path = os.path.join(args.theme_dir, "widgets", "tasks.svg")

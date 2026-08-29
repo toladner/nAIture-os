@@ -72,15 +72,28 @@ PlasmoidItem {
         iface: "org.kde.KWin"
     }
 
-    readonly property bool showing: kwin.properties.showingDesktop === true
+    // KWin reports the state on /KWin, but it does not emit a properties-changed
+    // for it, so a binding straight to the D-Bus property never comes back down
+    // once it has gone up — every click would then ask for "show" again and the
+    // windows would never return. The state is therefore ours, seeded and
+    // corrected from KWin whenever KWin does say something.
+    property bool showing: false
 
+    readonly property bool reported: kwin.properties.showingDesktop === true
+    onReportedChanged: root.showing = reported
+    Component.onCompleted: root.showing = reported
+
+    // Passing false is what brings every window back where and how it was;
+    // KWin restores the previous arrangement itself.
     function toggle() {
+        const next = !root.showing;
+        root.showing = next;
         DBus.SessionBus.asyncCall({
             service: "org.kde.KWin",
             path: "/KWin",
             iface: "org.kde.KWin",
             member: "showDesktop",
-            arguments: [!root.showing],
+            arguments: [next],
             signature: "(b)"
         });
     }
