@@ -405,6 +405,19 @@ PlasmoidItem {
                         width: root.iconSize
                         height: root.iconSize
 
+                        // Kirigami rounds a themed icon down to the nearest
+                        // size the theme actually ships — 16, 22, 24, 32 — and
+                        // draws that pixmap centred in whatever item it was
+                        // given. Asking for 29 therefore drew 22 inside 29, so
+                        // every window's icon sat in a box a third bigger than
+                        // itself while the mark, which is an Image and honours
+                        // the size it is handed, filled its own. It read as the
+                        // mark being too large; it was the only one at full
+                        // size. The island's height is chosen backwards from
+                        // the room available and is not a size any theme ships,
+                        // so the rounding has to go.
+                        roundToIconSize: false
+
                         source: tile.model.decoration
 
                         // Never Kirigami's hover wash: the lift and the marker
