@@ -53,5 +53,10 @@ kwin_script unloadScript "$ID"
 kwin_script unloadScript "$SESSION_ID"
 kwin_script loadDeclarativeScript "$REPO/kwin/naiture-dock/contents/ui/main.qml" "$SESSION_ID"
 kwin_script start
+# `start` runs every *enabled* script that is not already running, so it brings
+# the installed package back from the dead — and its URL is the one the engine
+# has cached, which is the whole reason we are loading the repo copy instead.
+# Two of these running fight over the same opacity, so drop it again afterwards.
+kwin_script unloadScript "$ID"
 
 echo "  dock rests at 20%, full opacity when the pointer is near"
