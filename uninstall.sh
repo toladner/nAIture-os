@@ -36,6 +36,8 @@ else
   kwriteconfig6 --file konsolerc --group "Desktop Entry" --key DefaultProfile --delete || true
 fi
 
+bash "$(dirname "${BASH_SOURCE[0]}")/scripts/dock-proximity.sh" --off >/dev/null 2>&1 || true
+
 rm -f  "$DATA/color-schemes/Naiture.colors"
 rm -rf "$DATA/plasma/desktoptheme/naiture"
 rm -rf "$DATA/wallpapers/naiture"

@@ -78,27 +78,44 @@ mapfile -t panels < <(
 if [[ ${#panels[@]} -eq 0 ]]; then
   record panels fail "no panels found"
 else
-  # Geometry lives in plasmashellrc, not with the containment.
+  # Geometry lives in plasmashellrc, not with the containment — and thickness
+  # lives one group deeper than the rest, in [Panel <id>][Defaults], which is
+  # the only place PanelView::setThickness reads it from.
   styled=0
   for id in "${panels[@]}"; do
-    t="$(kreadconfig6 --file plasmashellrc --group PlasmaViews --group "Panel $id" --key thickness 2>/dev/null)"
+    t="$(kreadconfig6 --file plasmashellrc --group PlasmaViews --group "Panel $id" --group Defaults --key thickness 2>/dev/null)"
     f="$(kreadconfig6 --file plasmashellrc --group PlasmaViews --group "Panel $id" --key floating 2>/dev/null)"
     l="$(kreadconfig6 --file plasmashellrc --group PlasmaViews --group "Panel $id" --key panelLengthMode 2>/dev/null)"
-    # The design's islands are flush with the edge (floating off) and rounded
-    # by the theme's panel-background.svg, not by Plasma's floating mode.
-    [[ "$t" == "50" && "$f" == "0" && "$l" == "1" ]] && styled=$(( styled + 1 ))
+    v="$(kreadconfig6 --file plasmashellrc --group PlasmaViews --group "Panel $id" --key panelVisibility 2>/dev/null)"
+    # The design's islands are flush with the edge (floating off), rounded by
+    # the theme's panel-background.svg rather than by Plasma's floating mode,
+    # and reserve no space so a maximised window runs underneath them (3 =
+    # WindowsGoBelow).
+    [[ "$t" == "50" && "$f" == "0" && "$l" == "1" && "$v" == "3" ]] && styled=$(( styled + 1 ))
   done
   if [[ $styled -eq ${#panels[@]} ]]; then
-    record panels ok "${#panels[@]} panel(s), all 50px, flush, fit-to-content"
+    record panels ok "${#panels[@]} panel(s), all 50px, flush, fit-to-content, no reserved space"
   else
     record panels fail "$styled of ${#panels[@]} panel(s) styled (see plasmashellrc)"
   fi
 fi
 
+# --- dock proximity ---
+# Plasma has no hover state for a panel, so the design's 20%-until-near dock is
+# a KWin script.
+dock="$(kreadconfig6 --file kwinrc --group Plugins --key naiture-dockEnabled 2>/dev/null)"
+if [[ "$dock" == "true" && -f "$DATA/kwin/scripts/naiture-dock/contents/ui/main.qml" ]]; then
+  record dock_proximity ok "centre island rests at 20%"
+elif [[ -f "$DATA/kwin/scripts/naiture-dock/contents/ui/main.qml" ]]; then
+  record dock_proximity fail "script installed but not enabled in kwinrc"
+else
+  record dock_proximity fail "KWin script not installed"
+fi
+
 # --- window decoration ---
 deco="$(kreadconfig6 --file kwinrc --group org.kde.kdecoration3 --key library 2>/dev/null)"
 if [[ "$deco" == "org.kde.klassy" ]]; then
-  radius="$(kreadconfig6 --file klassy/klassyrc --group Common --key WindowCornerRadius 2>/dev/null)"
+  radius="$(kreadconfig6 --file klassy/klassyrc --group Windeco --key WindowCornerRadius 2>/dev/null)"
   if [[ "$radius" == "22" ]]; then
     record windows ok "Klassy, 22px corners"
   else

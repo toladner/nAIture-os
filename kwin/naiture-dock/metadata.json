@@ -1,0 +1,12 @@
+{
+    "KPackageStructure": "KWin/Script",
+    "X-Plasma-API": "declarativescript",
+    "KPlugin": {
+        "Id": "naiture-dock",
+        "Name": "naiture dock proximity",
+        "Description": "Fades the centre island to rest opacity until the pointer comes near it",
+        "License": "MIT",
+        "Icon": "preferences-system-windows-script-test",
+        "EnabledByDefault": false
+    }
+}

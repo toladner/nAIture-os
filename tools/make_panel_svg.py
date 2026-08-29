@@ -15,6 +15,13 @@ import os
 
 TILE = 16          # corner size, also the top corner radius
 GAP = 4            # keeps slices from bleeding into each other
+
+# Applets are laid out inside the panel background's margins, so the margins are
+# what decides how big a task icon gets: the task manager sizes its icon to the
+# height it is given (taskmanager/qml/Task.qml sizes the icon to `task.height`).
+# The design puts 34px tiles in a 50px dock and pads the dock 8px at the sides,
+# so 8px all round reproduces both.
+MARGIN = 8
 COLS = [0, TILE + GAP, 2 * (TILE + GAP)]
 ROWS = COLS
 W = COLS[2] + TILE
@@ -79,10 +86,10 @@ def build(fill, opacity, hair):
 
     # Content margins: keep applets clear of the rounded top and the edges.
     for eid, x, y, w, h in (
-        ("hint-top-margin",    COLS[1], ROWS[0], TILE, 2),
-        ("hint-bottom-margin", COLS[1], ROWS[2], TILE, 1),
-        ("hint-left-margin",   COLS[0], ROWS[1], 2, TILE),
-        ("hint-right-margin",  COLS[2], ROWS[1], 2, TILE),
+        ("hint-top-margin",    COLS[1], ROWS[0], TILE, MARGIN),
+        ("hint-bottom-margin", COLS[1], ROWS[2], TILE, MARGIN),
+        ("hint-left-margin",   COLS[0], ROWS[1], MARGIN, TILE),
+        ("hint-right-margin",  COLS[2], ROWS[1], MARGIN, TILE),
     ):
         o.append(f'  <rect id="{eid}" x="{x}" y="{y}" width="{w}" height="{h}" '
                  f'fill="none" />')
