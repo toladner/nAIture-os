@@ -3,9 +3,9 @@
     "KPlugin": {
         "Id": "org.naiture.dock",
         "Name": "naiture Dock",
-        "Description": "The design's switcher: icons that lift under the pointer, and one bar that slides to the active window",
+        "Description": "The design's switcher: the mark, and icons that lift under the pointer with one bar that slides between them",
         "Category": "Windows and Tasks",
-        "Icon": "preferences-system-windows",
+        "Icon": "naiture",
         "License": "MIT",
         "Authors": [
             {
@@ -14,5 +14,8 @@
         ],
         "Website": "https://github.com/toladner/nAIture-os"
     },
-    "X-Plasma-API-Minimum-Version": "6.0"
+    "X-Plasma-API-Minimum-Version": "6.0",
+    "X-Plasma-Provides": [
+        "org.kde.plasma.launchermenu"
+    ]
 }

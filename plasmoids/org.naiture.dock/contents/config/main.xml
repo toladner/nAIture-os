@@ -10,5 +10,15 @@
       the applet only persists what the model reports.</label>
       <default></default>
     </entry>
+    <entry name="pinnedFiles" type="String">
+      <label>Files and folders kept at the top of the start sheet's file
+      column, as a JSON array of {path, display, decoration, description}.</label>
+      <default>[]</default>
+    </entry>
+    <entry name="pinnedTasks" type="String">
+      <label>AI tasks kept at the top of the start sheet's task column, as a
+      JSON array of {sessionId, project, display}.</label>
+      <default>[]</default>
+    </entry>
   </group>
 </kcfg>
