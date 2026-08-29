@@ -38,17 +38,25 @@ window keeps square corners, and `KwinBorderSize`, which Klassy expects to own.
 Klassy's opacity values are ignored unless `OverrideActiveTitleBarOpacity` and
 `OverrideInactiveTitleBarOpacity` are true — the titlebar stays solid otherwise.
 
-The window *body* is **not** glass yet, and this is the largest remaining gap.
-It is painted by the widget style, not the compositor. Breeze paints it opaque,
-KWin's `translucency` effect only acts on inactive windows, and Klassy's opacity
-stops at the titlebar and toolbar. Konsole is translucent only because its own
-profile sets `Opacity=0.70`.
+The window *body* is translucent through a KWin window rule
+(`scripts/window-glass.sh`), which forces 85% opacity on every window and 76%
+when unfocused. The widget style cannot do it — Breeze paints backgrounds opaque
+and KWin's `translucency` effect only acts on inactive windows — and Klassy's
+opacity stops at the titlebar and toolbar.
 
-Kvantum is the one route to a translucent body, but it repaints the entire
-widget set from its own SVG. Copying a shipped Kvantum theme was tried and
-rejected: it recoloured every window in that theme's palette — measured at
-`(64,69,82)` where naiture wants `(13,24,17)` — and did not turn translucency on
-either. Doing it properly means authoring a Kvantum SVG in the naiture palette.
+Two honest differences from the design remain:
+
+* KWin fades the **whole window**, text included, where the design fades only
+  the background. That is why 85% rather than the design's 70%: further down,
+  overlapping windows become hard to read.
+* KWin only blurs behind windows that register a blur region. Konsole does, so
+  terminals are properly frosted; most applications do not, so they are clear
+  glass rather than frosted. A force-blur KWin effect (third-party) or a Kvantum
+  theme authored in the naiture palette would close that.
+
+Kvantum was tried and rejected: copying a shipped theme repainted every window
+in that theme's palette — measured at `(64,69,82)` where naiture wants
+`(13,24,17)` — and did not switch translucency on either.
 
 GTK applications (Firefox, Flatpaks) are outside all of this.
 | `0 50px 110px -40px rgba(0,0,0,0.88)` | `breezerc` `ShadowSize=ShadowVeryLarge`, `ShadowStrength=240` |

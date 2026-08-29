@@ -13,10 +13,10 @@ set -euo pipefail
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 CONF="${XDG_CONFIG_HOME:-$HOME/.config}"
 
-# NOT YET the design. Kvantum is the only route to a translucent window body,
-# but it repaints the whole widget set from its own SVG, so a naiture Kvantum
-# theme has to be authored first — copying an existing one repaints every window
-# in that theme's colours and still does not switch translucency on. Until that
-# theme exists, Breeze keeps the palette right and window bodies opaque.
+# Window translucency is handled by scripts/window-glass.sh (a KWin opacity
+# rule), not by the widget style. Kvantum could supply both translucency and a
+# blur region, but it repaints the whole widget set from its own SVG, so using
+# it means authoring a Kvantum theme in the naiture palette first. Until then
+# Breeze keeps the colours right.
 kwriteconfig6 --file kdeglobals --group KDE --key widgetStyle Breeze
-echo "  widgets -> Breeze (opaque bodies; see docs/design-mapping.md)"
+echo "  widgets -> Breeze"

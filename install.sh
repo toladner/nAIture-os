@@ -64,7 +64,7 @@ backup() {
   mkdir -p "$BACKUP"
   : > "$BACKUP/.absent"
   local f
-  for f in kdeglobals kwinrc plasmarc konsolerc breezerc plasmashellrc klassy/klassyrc \
+  for f in kdeglobals kwinrc kwinrulesrc plasmarc konsolerc breezerc plasmashellrc klassy/klassyrc \
            Kvantum/kvantum.kvconfig \
            plasma-org.kde.plasma.desktop-appletsrc; do
     if [[ -f "$CONF/$f" ]]; then
@@ -244,6 +244,7 @@ apply() {
 
   bash "$REPO/scripts/window-decoration.sh"
   bash "$REPO/scripts/widget-style.sh"
+  bash "$REPO/scripts/window-glass.sh"
 
   if command -v qdbus-qt6 >/dev/null 2>&1; then
     qdbus-qt6 org.kde.KWin /KWin reconfigure >/dev/null 2>&1 || true
