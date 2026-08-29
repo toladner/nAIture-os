@@ -99,7 +99,14 @@ install_assets() {
       >/dev/null 2>&1 || true
   fi
 
-  # The time pill with its quick-settings sheet, and the show-desktop sliver.
+  # The mark, wherever an icon theme is asked for it. The Claude console's
+  # icon is scripts/claude-console.sh's, because it is fetched rather than
+  # shipped.
+  install -Dm644 "$REPO/icons/naiture.svg" \
+                 "$DATA/icons/hicolor/scalable/apps/naiture.svg"
+
+  # The dock (which carries the mark and the start sheet), the time pill with
+  # its quick-settings sheet, and the show-desktop sliver.
   mkdir -p "$DATA/plasma/plasmoids"
   for applet in org.naiture.dock org.naiture.quicksettings org.naiture.showdesktop; do
     rm -rf "$DATA/plasma/plasmoids/$applet"
@@ -256,6 +263,7 @@ apply() {
   bash "$REPO/scripts/window-decoration.sh"
   bash "$REPO/scripts/widget-style.sh"
   bash "$REPO/scripts/dock-proximity.sh"
+  bash "$REPO/scripts/claude-console.sh"
 
   if command -v qdbus-qt6 >/dev/null 2>&1; then
     qdbus-qt6 org.kde.KWin /KWin reconfigure >/dev/null 2>&1 || true

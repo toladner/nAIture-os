@@ -44,6 +44,12 @@ rm -rf "$DATA/plasma/desktoptheme/naiture"
 rm -rf "$DATA/plasma/plasmoids/org.naiture.dock"
 rm -rf "$DATA/plasma/plasmoids/org.naiture.quicksettings"
 rm -rf "$DATA/plasma/plasmoids/org.naiture.showdesktop"
+rm -f  "$DATA/icons/hicolor/scalable/apps/naiture.svg"
+rm -f  "$DATA/icons/hicolor/scalable/apps/naiture-claude.svg"
+rm -f  "$DATA"/icons/hicolor/*/apps/naiture-claude.png
+rm -f  "$DATA/applications/naiture-claude.desktop"
+rm -f  "$DATA/konsole/Claude.profile"
+
 rm -rf "$DATA/wallpapers/naiture"
 rm -f  "$DATA/konsole/Naiture.colorscheme" "$DATA/konsole/Naiture.profile"
 
