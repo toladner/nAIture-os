@@ -1,7 +1,7 @@
 // The design's two bottom islands:
-//   centre — launcher, task switcher, and the tray that backs the quick tiles
-//   right  — the time pill, nothing else (design/naiture-canvas.dc.html shows
-//            the resting pill containing only "10:12")
+//   centre — the mark, the rule and the switcher, in one applet
+//   right  — the time pill and the show-desktop sliver (design/naiture-canvas.dc.html
+//            shows the resting pill containing only "10:12")
 //
 // Only creation, applet population and location happen here. plasmashell keeps
 // panel *geometry* in plasmashellrc, and only picks up changes there on start,
@@ -20,31 +20,23 @@ function island(applets) {
   return p;
 }
 
+// The dock carries the mark, the rule and the running apps in one applet,
+// because the accent bar is one rectangle that slides between them and two
+// applets are two coordinate spaces with a panel layout in between.
 island([
-  "org.kde.plasma.kickoff",
   "org.naiture.dock"
 ]);
 
-// The design's time pill opens a panel of quick tiles — Wi-Fi, Bluetooth,
-// Sound, Do not disturb — over volume and brightness sliders. That is what
-// Plasma's system tray popup already is, so the tray sits in the time island
-// with every icon hidden; scripts/panel-style.sh does the hiding, leaving just
-// the expander next to the clock.
-var time = island([
-  "org.kde.plasma.systemtray",
-  "org.kde.plasma.digitalclock"
+// The design's time pill opens a panel of quick tiles over volume and
+// brightness sliders. Plasma's tray plus its clock is the nearest stock pair,
+// but the tray always shows an expander chevron beside the time and its popup
+// is Plasma's list rather than the design's sheet, so both are ours. The
+// sliver at the corner is a separate applet because Plasma draws its "this
+// applet is open" bar across a whole applet, and folding the sliver into the
+// clock would stretch that bar past the time.
+island([
+  "org.naiture.quicksettings",
+  "org.naiture.showdesktop"
 ]);
-
-// The clock is the design's pill: just the time, 24-hour, no date.
-try {
-  var clock = time.widgetIds.length ? widgetById(time.widgetIds[0]) : null;
-  if (clock) {
-    clock.currentConfigGroup = ["Appearance"];
-    clock.writeConfig("showDate", false);
-    clock.writeConfig("use24hFormat", 2);
-    clock.writeConfig("showSeconds", 0);
-    clock.reloadConfig();
-  }
-} catch (e) {}
 
 "islands built";
