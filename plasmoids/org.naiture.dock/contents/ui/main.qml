@@ -66,7 +66,16 @@ PlasmoidItem {
     // How far an icon lifts under the pointer. Neighbours stay put: the island
     // is sized to its contents, so growing the row would make the whole island
     // breathe on every hover.
-    readonly property real magnification: 1.25
+    //
+    // This is also what decides how full the island looks, and the two pull
+    // against each other. An icon lifts from its resting size into the room
+    // above it, so whatever it is allowed to grow by, it has to rest that much
+    // below the island's content height — and that reserve is empty every
+    // moment the pointer is elsewhere, which is most of them. At 1.25 the icon
+    // rested at 24px in a 42px island, 57% of it, against the design's 34-in-50
+    // ratio of 68%; the island read as tall because it was mostly holding room
+    // for a hover. 1.12 puts the resting icon at 26px and still lifts it to 29.
+    readonly property real magnification: 1.12
 
     // An icon lifts from its own baseline, so it needs somewhere to go. All it
     // has is the island's content height plus whatever is left of the top
