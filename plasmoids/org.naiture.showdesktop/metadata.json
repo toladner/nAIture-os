@@ -1,0 +1,18 @@
+{
+    "KPackageStructure": "Plasma/Applet",
+    "KPlugin": {
+        "Id": "org.naiture.showdesktop",
+        "Name": "naiture Show Desktop Edge",
+        "Description": "A sliver at the corner of the screen that peeks at the desktop",
+        "Category": "Windows and Tasks",
+        "Icon": "user-desktop",
+        "License": "MIT",
+        "Authors": [
+            {
+                "Name": "naiture"
+            }
+        ],
+        "Website": "https://github.com/toladner/nAIture-os"
+    },
+    "X-Plasma-API-Minimum-Version": "6.0"
+}

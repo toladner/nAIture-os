@@ -28,7 +28,7 @@ set -euo pipefail
 CONF="${XDG_CONFIG_HOME:-$HOME/.config}"
 APPLETSRC="$CONF/plasma-org.kde.plasma.desktop-appletsrc"
 
-THICKNESS="${NAITURE_PANEL_THICKNESS:-50}"
+THICKNESS="${NAITURE_PANEL_THICKNESS:-42}"
 LENGTH_MODE=1     # 0 fill available, 1 fit content, 2 custom
 OPACITY=0         # 0 adaptive, 1 opaque, 2 translucent
 VISIBILITY=3      # 0 normal, 1 auto-hide, 2 dodge windows, 3 windows go below

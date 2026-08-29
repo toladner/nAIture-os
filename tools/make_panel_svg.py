@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
 """Generate the naiture panel background.
 
-Plasma draws a panel from a 9-slice SVG: four corners kept at their natural
-size, four edges stretched, and a centre that fills the rest. Each slice is a
-separate element identified by id. This writes the three variants Plasma looks
-for — the default and `translucent/` (the design's glass film over the
-wallpaper) and `opaque/` (what it becomes behind a maximised window).
+Plasma draws a panel from a 9-slice SVG. Each slice is looked up by element id
+and rendered on its own, so every slice here is a group holding both its fill
+and its share of the design's hairline — see tools/nineslice.py for why a bare
+sibling path would never appear.
+
+This writes the three variants Plasma looks for: the default and `translucent/`
+(the design's glass film over the wallpaper) and `opaque/` (what it becomes
+behind a maximised window).
 
 The design's island is flush with the screen edge and rounded only along its
 top, so the bottom corners here are square on purpose.
@@ -13,15 +16,20 @@ top, so the bottom corners here are square on purpose.
 import argparse
 import os
 
+from nineslice import (fill_path, fill_rect, group, hints, quarter_disc,
+                       quarter_hairline, stroke)
+
 TILE = 16          # corner size, also the top corner radius
 GAP = 4            # keeps slices from bleeding into each other
 
 # Applets are laid out inside the panel background's margins, so the margins are
 # what decides how big a task icon gets: the task manager sizes its icon to the
 # height it is given (taskmanager/qml/Task.qml sizes the icon to `task.height`).
-# The design puts 34px tiles in a 50px dock and pads the dock 8px at the sides,
-# so 8px all round reproduces both.
-MARGIN = 8
+# The design puts 34px tiles in a 50px dock and pads the dock 8px at the sides;
+# the islands here run a little shorter than 50px so they clear the bottom of a
+# terminal, and the padding is scaled with them to keep the ratio.
+MARGIN = 7
+
 COLS = [0, TILE + GAP, 2 * (TILE + GAP)]
 ROWS = COLS
 W = COLS[2] + TILE
@@ -34,66 +42,38 @@ VARIANTS = {
 }
 
 
-def rect(eid, x, y, fill, opacity):
-    return (f'  <rect id="{eid}" x="{x}" y="{y}" width="{TILE}" height="{TILE}" '
-            f'fill="{fill}" fill-opacity="{opacity}" />')
-
-
-def corner(eid, x, y, fill, opacity, side):
-    """A quarter disc: the filled part of a rounded corner."""
-    r = TILE
-    if side == "topleft":
-        d = f"M {x},{y+r} A {r},{r} 0 0 1 {x+r},{y} L {x+r},{y+r} Z"
-    else:  # topright
-        d = f"M {x},{y} A {r},{r} 0 0 1 {x+r},{y+r} L {x},{y+r} Z"
-    return (f'  <path id="{eid}" d="{d}" fill="{fill}" fill-opacity="{opacity}" />')
-
-
-def hairline(x, y, opacity, side):
-    """The design's 1px rule along the top edge, following the curve."""
-    r = TILE
-    if side == "top":
-        d = f"M {x},{y+0.5} L {x+TILE},{y+0.5}"
-    elif side == "topleft":
-        d = f"M {x+0.5},{y+r} A {r-0.5},{r-0.5} 0 0 1 {x+r},{y+0.5}"
-    else:
-        d = f"M {x},{y+0.5} A {r-0.5},{r-0.5} 0 0 1 {x+r-0.5},{y+r}"
-    return (f'  <path d="{d}" fill="none" stroke="#ffffff" '
-            f'stroke-opacity="{opacity}" stroke-width="1" />')
-
-
 def build(fill, opacity, hair):
     o = [f'<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" '
          f'viewBox="0 0 {W} {H}" version="1.1">',
          '  <title>naiture panel background</title>']
 
-    # corners — top two rounded, bottom two square so the island sits flush
-    o.append(corner("topleft",  COLS[0], ROWS[0], fill, opacity, "topleft"))
-    o.append(rect("top",        COLS[1], ROWS[0], fill, opacity))
-    o.append(corner("topright", COLS[2], ROWS[0], fill, opacity, "topright"))
+    def rect(x, y):
+        return fill_rect(x, y, TILE, TILE, fill, opacity)
 
-    o.append(rect("left",   COLS[0], ROWS[1], fill, opacity))
-    o.append(rect("center", COLS[1], ROWS[1], fill, opacity))
-    o.append(rect("right",  COLS[2], ROWS[1], fill, opacity))
+    # Top row: rounded, and carrying the design's 1px rule along the edge.
+    o += group("topleft", [
+        fill_path(quarter_disc(COLS[0], ROWS[0], TILE, "topleft"), fill, opacity),
+        quarter_hairline(COLS[0], ROWS[0], TILE, "topleft", hair),
+    ])
+    o += group("top", [
+        rect(COLS[1], ROWS[0]),
+        stroke(f"M {COLS[1]},{ROWS[0] + 0.5} L {COLS[1] + TILE},{ROWS[0] + 0.5}", hair),
+    ])
+    o += group("topright", [
+        fill_path(quarter_disc(COLS[2], ROWS[0], TILE, "topright"), fill, opacity),
+        quarter_hairline(COLS[2], ROWS[0], TILE, "topright", hair),
+    ])
 
-    o.append(rect("bottomleft",  COLS[0], ROWS[2], fill, opacity))
-    o.append(rect("bottom",      COLS[1], ROWS[2], fill, opacity))
-    o.append(rect("bottomright", COLS[2], ROWS[2], fill, opacity))
+    o += group("left", [rect(COLS[0], ROWS[1])])
+    o += group("center", [rect(COLS[1], ROWS[1])])
+    o += group("right", [rect(COLS[2], ROWS[1])])
 
-    o.append(hairline(COLS[0], ROWS[0], hair, "topleft"))
-    o.append(hairline(COLS[1], ROWS[0], hair, "top"))
-    o.append(hairline(COLS[2], ROWS[0], hair, "topright"))
+    # Bottom row: square, so the island sits flush against the screen edge.
+    o += group("bottomleft", [rect(COLS[0], ROWS[2])])
+    o += group("bottom", [rect(COLS[1], ROWS[2])])
+    o += group("bottomright", [rect(COLS[2], ROWS[2])])
 
-    # Content margins: keep applets clear of the rounded top and the edges.
-    for eid, x, y, w, h in (
-        ("hint-top-margin",    COLS[1], ROWS[0], TILE, MARGIN),
-        ("hint-bottom-margin", COLS[1], ROWS[2], TILE, MARGIN),
-        ("hint-left-margin",   COLS[0], ROWS[1], MARGIN, TILE),
-        ("hint-right-margin",  COLS[2], ROWS[1], MARGIN, TILE),
-    ):
-        o.append(f'  <rect id="{eid}" x="{x}" y="{y}" width="{w}" height="{h}" '
-                 f'fill="none" />')
-
+    o += hints("", COLS, ROWS, TILE, (MARGIN, MARGIN, MARGIN, MARGIN))
     o.append("</svg>")
     return "\n".join(o) + "\n"
 

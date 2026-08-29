@@ -1,0 +1,18 @@
+{
+    "KPackageStructure": "Plasma/Applet",
+    "KPlugin": {
+        "Id": "org.naiture.quicksettings",
+        "Name": "naiture Time & Quick Settings",
+        "Description": "The design's time pill, with the quick settings behind it",
+        "Category": "System Information",
+        "Icon": "preferences-system",
+        "License": "MIT",
+        "Authors": [
+            {
+                "Name": "naiture"
+            }
+        ],
+        "Website": "https://github.com/toladner/nAIture-os"
+    },
+    "X-Plasma-API-Minimum-Version": "6.0"
+}

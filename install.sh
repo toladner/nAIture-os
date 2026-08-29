@@ -95,7 +95,16 @@ install_assets() {
       >/dev/null 2>&1 || true
     python3 "$REPO/tools/make_tasks_svg.py" -d "$DATA/plasma/desktoptheme/naiture" \
       >/dev/null 2>&1 || true
+    python3 "$REPO/tools/make_dialog_svg.py" -d "$DATA/plasma/desktoptheme/naiture" \
+      >/dev/null 2>&1 || true
   fi
+
+  # The time pill with its quick-settings sheet, and the show-desktop sliver.
+  mkdir -p "$DATA/plasma/plasmoids"
+  for applet in org.naiture.quicksettings org.naiture.showdesktop; do
+    rm -rf "$DATA/plasma/plasmoids/$applet"
+    cp -a "$REPO/plasmoids/$applet" "$DATA/plasma/plasmoids/$applet"
+  done
 
   mkdir -p "$DATA/wallpapers"
   rm -rf "$DATA/wallpapers/naiture"
@@ -242,6 +251,7 @@ apply() {
     bash "$REPO/scripts/panel-style.sh"
   fi
 
+  bash "$REPO/scripts/accent.sh"
   bash "$REPO/scripts/window-decoration.sh"
   bash "$REPO/scripts/widget-style.sh"
   bash "$REPO/scripts/dock-proximity.sh"

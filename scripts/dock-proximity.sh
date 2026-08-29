@@ -46,6 +46,9 @@ qdbus-qt6 org.kde.KWin /KWin reconfigure >/dev/null 2>&1 || true
 # running whatever was at that path the first time — so for *this* session run
 # the copy in the repo, whose path the engine has not seen, and let the
 # installed package take over at the next login.
+# The reconfigure above starts the enabled plugin asynchronously; unloading
+# before it has actually started leaves it running.
+sleep 1
 kwin_script unloadScript "$ID"
 kwin_script unloadScript "$SESSION_ID"
 kwin_script loadDeclarativeScript "$REPO/kwin/naiture-dock/contents/ui/main.qml" "$SESSION_ID"

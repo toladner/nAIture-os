@@ -27,11 +27,20 @@ scheme="$(kreadconfig6 --file kdeglobals --group General --key ColorScheme 2>/de
   && record colour_scheme ok "Naiture" \
   || record colour_scheme fail "expected Naiture, found '${scheme:-unset}'"
 
-# The accent must survive; Plasma re-derives selection from it.
+# One accent, and everything following it. Which colour it is depends on what
+# scripts/accent.sh was last asked for, so what matters is that kdeglobals and
+# the desktop theme's own colours agree — plasmashell reads the theme's copy,
+# not kdeglobals, so a mismatch means half the desktop is the old colour.
 accent="$(kreadconfig6 --file kdeglobals --group General --key AccentColor 2>/dev/null)"
-[[ "$accent" == "106,191,217" ]] \
-  && record accent ok "$accent" \
-  || record accent fail "expected 106,191,217, found '${accent:-unset}'"
+themed="$(kreadconfig6 --file "$DATA/plasma/desktoptheme/naiture/colors" \
+  --group "Colors:Selection" --key BackgroundNormal 2>/dev/null)"
+if [[ -z "$accent" ]]; then
+  record accent fail "no AccentColor set"
+elif [[ "$accent" == "$themed" ]]; then
+  record accent ok "$accent, theme in step"
+else
+  record accent fail "kdeglobals has $accent, the desktop theme has '${themed:-unset}'"
+fi
 
 # --- plasma theme ---
 theme="$(kreadconfig6 --file plasmarc --group Theme --key name 2>/dev/null)"
@@ -91,10 +100,10 @@ else
     # the theme's panel-background.svg rather than by Plasma's floating mode,
     # and reserve no space so a maximised window runs underneath them (3 =
     # WindowsGoBelow).
-    [[ "$t" == "50" && "$f" == "0" && "$l" == "1" && "$v" == "3" ]] && styled=$(( styled + 1 ))
+    [[ "$t" == "42" && "$f" == "0" && "$l" == "1" && "$v" == "3" ]] && styled=$(( styled + 1 ))
   done
   if [[ $styled -eq ${#panels[@]} ]]; then
-    record panels ok "${#panels[@]} panel(s), all 50px, flush, fit-to-content, no reserved space"
+    record panels ok "${#panels[@]} panel(s), all 42px, flush, fit-to-content, no reserved space"
   else
     record panels fail "$styled of ${#panels[@]} panel(s) styled (see plasmashellrc)"
   fi

@@ -110,6 +110,101 @@ then poll the log. Match the real process (`pgrep -f 'dnf install'`); `pgrep -x
 dnf` does not match and will report success while the transaction is still
 running.
 
+## The accent is one setting
+
+`./scripts/accent.sh [role|#hex]` is the only place a colour is chosen; it
+defaults to the design's gold. It writes **two** things, and writing one without
+the other leaves half the desktop the old colour:
+
+* `kdeglobals [General] AccentColor` — applications and the window decoration
+* the Naiture colour scheme **and the desktop theme's own `colors` file** —
+  plasmashell resolves `Kirigami.Theme.highlightColor` from the desktop theme's
+  copy, not from kdeglobals, so the quick-settings sheet, the focused task's bar
+  and Plasma's applet indicator all read that one.
+
+Nothing else may hard-code an accent. In SVGs, paint `fill="currentColor"` with
+`class="ColorScheme-Highlight"` and ship a `<style id="current-color-scheme">`
+block; KSvg swaps that block for the running scheme's colours. In QML, read
+`Kirigami.Theme.highlightColor`.
+
+## KSvg renders slices by id — anything unnamed is invisible
+
+A 9-slice SVG is drawn one element at a time, looked up by id. A hairline or an
+accent bar written as a *sibling* of the slice it belongs to is simply never
+drawn, with no warning. Every slice in `tools/make_*_svg.py` is therefore a
+`<g id="…">` holding its fill, its share of the hairline and anything else that
+belongs to it — see `tools/nineslice.py`.
+
+The `hint-*-margin` elements are the frame's content inset, and they also cap
+how large a corner is drawn: a 2px hint on a 20px radius rounds the corner off
+to 2px. Keep the hints at least as large as the radius.
+
+`plasmashell` and KWin both cache theme SVGs. After changing one:
+
+```bash
+rm -f ~/.cache/plasma_theme_*.kcache
+rm -rf ~/.cache/plasmashell ~/.cache/ksvg-elements
+systemctl --user restart plasma-plasmashell
+```
+
+## The islands
+
+`scripts/panel-style.sh` writes panel geometry, and the keys are split across
+two groups of `plasmashellrc` — `[PlasmaViews][Panel <id>]` for alignment,
+floating, `panelOpacity`, `panelLengthMode` and `panelVisibility`, but
+`[PlasmaViews][Panel <id>][Defaults]` for `thickness`. `PanelView::setThickness`
+reads thickness from the Defaults group and never looks at the parent, so a
+thickness in the obvious place is silently ignored.
+
+`panelVisibility=3` (WindowsGoBelow) is what lets a maximised window run the
+full height of the screen underneath the islands.
+
+The **system tray is a nested containment**, so its settings live in
+`[Containments][C][Applets][A][General]`, not the `[Configuration][General]`
+every ordinary applet uses. Plasma writing its own `extraItems`/`knownItems`
+there is the proof. Application tray icons are StatusNotifierItems, hidden by
+their own id rather than a plugin id — ask
+`org.kde.StatusNotifierWatcher` for the running ones rather than guessing.
+
+Task icon size follows from the panel background's margins: the task manager
+sizes its icon to the height it is given. Change `MARGIN` in
+`tools/make_panel_svg.py`, not the applet.
+
+## KWin scripts
+
+`kwin/naiture-dock` fades the centre island, because Plasma has no hover state
+for a panel. Three things to know:
+
+* A **declarative** script reaches the workspace through the `Workspace`
+  singleton of `org.kde.kwin` and enumerates with the `windows` property; a
+  **plain-javascript** script gets a lowercase `workspace` and `windowList()`.
+  Each spelling is undefined in the other flavour.
+* Panels are layer-shell surfaces but do appear in the window list as `dock`
+  windows owned by plasmashell, and their `opacity` is writable.
+* KWin's QML engine caches a component **by URL for the life of the process**
+  and never re-reads the file, so re-installing in the same session keeps
+  running the old code. `scripts/dock-proximity.sh` works around it by loading
+  the repo copy for the current session; a fresh login uses the installed one.
+
+## The two applets
+
+`plasmoids/org.naiture.quicksettings` is the time pill and the design's
+quick-settings sheet — Wi-Fi, Bluetooth, sound, do not disturb, aeroplane mode,
+night light, and volume and brightness sliders, each driving the real thing
+through the same APIs Plasma's own applets use. It exists because Plasma's
+system tray always shows an expander chevron beside the clock when anything is
+hidden, and its popup is Plasma's list rather than the design's sheet.
+
+It draws its own background (`Plasmoid.backgroundHints: NoBackground` plus a
+rounded Rectangle): the theme's `dialogs/background.svg` is painted by
+`PlasmaExtras.Representation`, which a plain `Item` root is not, so a popup that
+does not use Plasma's scaffolding gets no themed frame.
+
+`plasmoids/org.naiture.showdesktop` is the sliver at the screen's corner that
+peeks at the desktop. It is a separate applet on purpose: Plasma draws its
+"this applet's popup is open" accent bar across the whole applet, so folding the
+sliver into the clock would stretch that bar past the time.
+
 ## Things that will trip you up
 
 **`sudo` may have no TTY.** In non-interactive shells `sudo` fails with "a

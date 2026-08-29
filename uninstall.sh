@@ -40,6 +40,8 @@ bash "$(dirname "${BASH_SOURCE[0]}")/scripts/dock-proximity.sh" --off >/dev/null
 
 rm -f  "$DATA/color-schemes/Naiture.colors"
 rm -rf "$DATA/plasma/desktoptheme/naiture"
+rm -rf "$DATA/plasma/plasmoids/org.naiture.quicksettings"
+rm -rf "$DATA/plasma/plasmoids/org.naiture.showdesktop"
 rm -rf "$DATA/wallpapers/naiture"
 rm -f  "$DATA/konsole/Naiture.colorscheme" "$DATA/konsole/Naiture.profile"
 

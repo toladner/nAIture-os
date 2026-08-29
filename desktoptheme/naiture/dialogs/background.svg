@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="68" height="68" viewBox="0 0 68 68" version="1.1">
+  <title>naiture dialog background</title>
+  <g id="topleft">
+    <path d="M 0,20 A 20,20 0 0 1 20,0 L 20,20 Z" fill="#0d1811" fill-opacity="0.85" />
+    <path d="M 0.5,20 A 19.5,19.5 0 0 1 20,0.5" fill="none" stroke="#ffffff" stroke-opacity="0.16" stroke-width="1" />
+  </g>
+  <g id="top">
+    <rect x="24" y="0" width="20" height="20" fill="#0d1811" fill-opacity="0.85" />
+    <path d="M 24,0.5 L 44,0.5" fill="none" stroke="#ffffff" stroke-opacity="0.16" stroke-width="1" />
+  </g>
+  <g id="topright">
+    <path d="M 68,20 A 20,20 0 0 0 48,0 L 48,20 Z" fill="#0d1811" fill-opacity="0.85" />
+    <path d="M 67.5,20 A 19.5,19.5 0 0 0 48,0.5" fill="none" stroke="#ffffff" stroke-opacity="0.16" stroke-width="1" />
+  </g>
+  <g id="left">
+    <rect x="0" y="24" width="20" height="20" fill="#0d1811" fill-opacity="0.85" />
+    <path d="M 0.5,24 L 0.5,44" fill="none" stroke="#ffffff" stroke-opacity="0.16" stroke-width="1" />
+  </g>
+  <g id="center">
+    <rect x="24" y="24" width="20" height="20" fill="#0d1811" fill-opacity="0.85" />
+  </g>
+  <g id="right">
+    <rect x="48" y="24" width="20" height="20" fill="#0d1811" fill-opacity="0.85" />
+    <path d="M 67.5,24 L 67.5,44" fill="none" stroke="#ffffff" stroke-opacity="0.16" stroke-width="1" />
+  </g>
+  <g id="bottomleft">
+    <path d="M 0,48 A 20,20 0 0 0 20,68 L 20,48 Z" fill="#0d1811" fill-opacity="0.85" />
+    <path d="M 0.5,48 A 19.5,19.5 0 0 0 20,67.5" fill="none" stroke="#ffffff" stroke-opacity="0.16" stroke-width="1" />
+  </g>
+  <g id="bottom">
+    <rect x="24" y="48" width="20" height="20" fill="#0d1811" fill-opacity="0.85" />
+    <path d="M 24,67.5 L 44,67.5" fill="none" stroke="#ffffff" stroke-opacity="0.16" stroke-width="1" />
+  </g>
+  <g id="bottomright">
+    <path d="M 68,48 A 20,20 0 0 1 48,68 L 48,48 Z" fill="#0d1811" fill-opacity="0.85" />
+    <path d="M 67.5,48 A 19.5,19.5 0 0 1 48,67.5" fill="none" stroke="#ffffff" stroke-opacity="0.16" stroke-width="1" />
+  </g>
+  <rect id="hint-top-margin" x="24" y="0" width="20" height="20" fill="none" />
+  <rect id="hint-bottom-margin" x="24" y="48" width="20" height="20" fill="none" />
+  <rect id="hint-left-margin" x="0" y="24" width="22" height="20" fill="none" />
+  <rect id="hint-right-margin" x="46" y="24" width="22" height="20" fill="none" />
+</svg>
