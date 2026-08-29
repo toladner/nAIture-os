@@ -16,7 +16,7 @@ Built and tested on **Fedora 44, Plasma 6.6.4, Wayland**.
 | Plasma theme | `naiture` — same palette for the shell, with background-contrast at the design's `saturate(170%)` |
 | Wallpaper | Generated from the design's own gradient, glows, mist band and 44-blade grass field, at your screen's resolution |
 | Panels | Floating, fit-to-content, 50px islands with adaptive translucency |
-| Windows | 22px rounded corners via Klassy, translucent bodies via a KWin opacity rule, no app icon and no window buttons as in the design |
+| Windows | 22px rounded corners and translucent titlebars via Klassy, no app icon and no window buttons as in the design |
 | Fonts | Archivo for the UI, JetBrains Mono for anything fixed-width |
 | Konsole | `Naiture` profile and colour scheme, 82% opacity with blur |
 
@@ -117,15 +117,20 @@ a plain gradient.
 * **The dock's hover fade.** The design's switcher is nearly transparent at rest
   and solidifies on hover. Plasma panels have no hover opacity, so the island
   sits at the resting film all the time.
-* **Glass, but not frosted.** Windows are translucent, but KWin only blurs
-  behind windows that register a blur region — Konsole does, most applications
-  do not. So terminals are frosted and other windows are clear glass. KWin also
-  fades the whole window rather than just its background, which is why the
-  default is 85% and not the design's 70%. Tune it with:
+* **Window bodies are opaque.** The design's are `rgba(13,24,17,0.70)`.
+  Forcing it is possible but was tried and dropped: KWin fades the whole window,
+  text included, rather than just the background, and overlapping windows became
+  messy to read. `scripts/window-glass.sh` is kept for anyone who wants it —
+  it is not run by the installer:
 
   ```bash
-  NAITURE_WINDOW_OPACITY=78 ./scripts/window-glass.sh
+  ./scripts/window-glass.sh          # translucent windows
+  ./scripts/window-glass.sh --off    # back to opaque
   ```
+
+  Konsole is still frosted, through its own profile opacity, because it
+  registers a blur region with KWin. Doing that for every application would take
+  a force-blur KWin effect or a Kvantum theme in the naiture palette.
 
 * **GTK apps.** Firefox, GNOME apps and Flatpaks keep their own theme.
 

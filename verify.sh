@@ -114,15 +114,6 @@ style="$(kreadconfig6 --file kdeglobals --group KDE --key widgetStyle 2>/dev/nul
   && record widgets ok "Breeze" \
   || record widgets warn "widget style is '${style:-unset}', expected Breeze"
 
-# --- window glass ---
-opa="$(kreadconfig6 --file kwinrulesrc --group naiture-glass --key opacityactive 2>/dev/null)"
-rul="$(kreadconfig6 --file kwinrulesrc --group naiture-glass --key opacityactiverule 2>/dev/null)"
-if [[ -n "$opa" && "$rul" == "2" ]]; then
-  record glass ok "windows forced to ${opa}% opacity"
-else
-  record glass fail "no naiture-glass KWin rule — windows are opaque"
-fi
-
 # --- konsole ---
 kprofile="$(kreadconfig6 --file konsolerc --group "Desktop Entry" --key DefaultProfile 2>/dev/null)"
 [[ "$kprofile" == "Naiture.profile" ]] \
