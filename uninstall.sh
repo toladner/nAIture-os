@@ -63,6 +63,23 @@ rm -f  "$HOME/.local/bin/naiture-view"
 rm -rf "$DATA/naiture"
 rm -rf "${XDG_RUNTIME_DIR:-/tmp}/naiture/scenes"
 
+# The explorer: our toolbar, the global view properties, and the keys that
+# emptied the window of everything but its band.
+rm -f  "$DATA/kxmlgui5/dolphin/dolphinui.rc"
+rm -rf "$DATA/dolphin/view_properties/global"
+for key in ShowStatusBar ShowZoomSlider FilterBar ShowSelectionToggle \
+           ShowToolTips AlwaysShowTabBar ShowCloseButtonOnTabs EditableUrl \
+           ShowFullPath; do
+  kwriteconfig6 --file dolphinrc --group General --key "$key" --delete 2>/dev/null || true
+done
+for key in ShowOpenTerminal ShowViewMode; do
+  kwriteconfig6 --file dolphinrc --group ContextMenu --key "$key" --delete 2>/dev/null || true
+done
+kwriteconfig6 --file dolphinrc --group MainWindow --group "Toolbar mainToolBar" \
+  --key IconText --delete 2>/dev/null || true
+kwriteconfig6 --file dolphinrc --group "Toolbar mainToolBar" \
+  --key IconText --delete 2>/dev/null || true
+
 # konsolerc keeps the tab bar and the hidden toolbars; the backup restore above
 # only covers the file when there was one to begin with.
 for key in TabBarVisibility TabBarPosition ExpandTabWidth NewTabButton \

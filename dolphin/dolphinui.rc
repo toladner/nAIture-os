@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<!DOCTYPE gui SYSTEM "kpartgui.dtd">
+<!--
+  naiture's toolbar for Dolphin: one band, and only what you reach for.
+
+  This is our own file rather than a copy of Dolphin's. A local ui.rc replaces
+  the application's outright when its version is high enough, and it turns out
+  that a file carrying nothing but a ToolBar leaves every menu and action
+  intact — they are built in code and merely arranged by this document. So the
+  twelve lines below are all that is needed, and Dolphin's own 140-line
+  (GPL-licensed) file does not have to be vendored into an MIT repository.
+
+  version must be >= the one Dolphin ships, which is compiled into a compressed
+  Qt resource and cannot be read from the installed files. It is pinned to what
+  upstream carries today: if Dolphin raises it, this file loses and the stock
+  toolbar comes back — the design goes, nothing breaks — and verify.sh says so.
+-->
+<gui name="dolphin" version="49">
+    <ToolBar noMerge="1" name="mainToolBar">
+        <text context="@title:menu">Main Toolbar</text>
+        <Action name="go_back" />
+        <Action name="go_forward" />
+        <Action name="go_up" />
+        <Action name="url_navigators" />
+        <Action name="view_mode" />
+        <Action name="toggle_search" />
+    </ToolBar>
+</gui>

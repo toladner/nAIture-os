@@ -178,6 +178,19 @@ else
   record console ok "$views views, tabs at the top"
 fi
 
+# --- the explorer's window ---
+uirc="$DATA/kxmlgui5/dolphin/dolphinui.rc"
+if [[ ! -f "$uirc" ]]; then
+  record explorer fail "no toolbar override — run scripts/explorer.sh"
+elif [[ "$(kreadconfig6 --file dolphinrc --group General --key ShowStatusBar)" != "0" ]]; then
+  record explorer warn "the status bar is back; dolphinrc has been rewritten"
+else
+  # A local ui.rc only wins while its version is >= the one Dolphin ships, and
+  # Dolphin's is inside a compressed Qt resource where nothing can read it. If
+  # an update raises it, the stock toolbar quietly comes back.
+  record explorer ok "toolbar v$(sed -n 's/.*version="\([0-9]*\)".*/\1/p' "$uirc" | head -1), one band"
+fi
+
 # --- assets on disk ---
 for path in "$DATA/plasma/plasmoids/org.naiture.dock/metadata.json" \
             "$DATA/plasma/plasmoids/org.naiture.quicksettings/metadata.json" \
