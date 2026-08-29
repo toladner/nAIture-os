@@ -244,6 +244,13 @@ module behind Plasma's own task manager, so the window list, the filtering and
 every request are its code. What this applet owns is only how a task looks and
 moves.
 
+Hovering shows a live thumbnail rather than the app's name. On Wayland there is
+no window pixmap to borrow: a thumbnail is a screencast, requested per window
+through `TaskManager.ScreencastingRequest` and rendered by
+`PipeWire.PipeWireSourceItem` — the pair Plasma's own tooltip uses
+(`taskmanager/qml/PipeWireThumbnail.qml`). The request exists only while the
+preview is up.
+
 An icon lifts from its own baseline, so its resting size is chosen *backwards*
 from the room available — the island's content height plus what is left of the
 margin once the marker and a little daylight are taken out. Size the icon to the

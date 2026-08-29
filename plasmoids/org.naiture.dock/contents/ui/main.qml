@@ -32,7 +32,9 @@ import QtQuick.Controls as QQC2
 import org.kde.plasma.plasmoid
 import org.kde.plasma.core as PlasmaCore
 import org.kde.kirigami as Kirigami
+import org.kde.plasma.components as PC3
 import org.kde.taskmanager as TaskManager
+import org.kde.pipewire as PipeWire
 
 PlasmoidItem {
     id: root
@@ -73,8 +75,31 @@ PlasmoidItem {
 
     readonly property color accent: Kirigami.Theme.highlightColor
 
+    // The rule between the launcher and the running apps. It is drawn here
+    // because the launcher is its own applet: this is the dock's leading edge.
+    readonly property int separatorWidth: 1
+    readonly property int separatorSpacing: 10
+
+    // The hover preview, in the sheet's language.
+    readonly property int previewWidth: 240
+    readonly property int previewPadding: 10
+    readonly property int previewRadius: 14
+
+    // The same daylight the quick-settings sheet keeps above the island.
+    readonly property int previewLift: 4 + islandMargin
+
+    // The rule wants the same daylight on both sides. On its left that gap is
+    // the panel's own spacing between applets — the launcher is a separate
+    // applet — plus the margin below; on its right it is only the margin, so
+    // the row has to start that much further along.
+    readonly property int panelSpacing: Kirigami.Units.smallSpacing
+
+    readonly property int leadIn: horizontal
+        ? panelSpacing + separatorSpacing * 2 + separatorWidth
+        : 0
+
     readonly property int contentLength:
-        Math.max(1, tasksModel.count * iconSize
+        Math.max(1, leadIn + tasksModel.count * iconSize
                  + Math.max(0, tasksModel.count - 1) * tileSpacing)
 
     Layout.minimumWidth: horizontal ? contentLength : 0
@@ -128,10 +153,26 @@ PlasmoidItem {
 
         readonly property Item markedTile: hoveredTile ?? activeTile
 
+        Rectangle {
+            id: separator
+
+            visible: root.horizontal
+            anchors.left: parent.left
+            anchors.leftMargin: root.separatorSpacing
+            anchors.verticalCenter: parent.verticalCenter
+            width: root.separatorWidth
+            height: Math.round(parent.height * 0.55)
+            radius: width / 2
+            color: "#f2f7f2"
+            opacity: 0.18
+        }
+
         Row {
             id: taskRow
 
-            anchors.centerIn: parent
+            anchors.left: parent.left
+            anchors.leftMargin: root.leadIn
+            anchors.verticalCenter: parent.verticalCenter
             spacing: root.tileSpacing
 
             Repeater {
@@ -217,10 +258,6 @@ PlasmoidItem {
                         cursorShape: Qt.PointingHandCursor
                         acceptedButtons: Qt.LeftButton | Qt.MiddleButton | Qt.RightButton
 
-                        QQC2.ToolTip.text: tile.model.AppName ?? ""
-                        QQC2.ToolTip.visible: containsMouse && QQC2.ToolTip.text !== ""
-                        QQC2.ToolTip.delay: Kirigami.Units.toolTipDelay
-
                         onEntered: dock.hoveredTile = tile
                         onExited: if (dock.hoveredTile === tile) {
                             dock.hoveredTile = null;
@@ -268,6 +305,99 @@ PlasmoidItem {
                             text: i18n("Close")
                             enabled: tile.model.IsClosable === true
                             onTriggered: tasksModel.requestClose(root.indexAt(tile.index))
+                        }
+                    }
+                }
+            }
+        }
+
+        // Windows shows a live thumbnail rather than the app's name, and so does
+        // this. On Wayland there is no pixmap to borrow: a thumbnail is a
+        // screencast, requested per window through TaskManager.ScreencastingRequest
+        // and rendered by PipeWireSourceItem — the same pair Plasma's own task
+        // manager uses (taskmanager/qml/PipeWireThumbnail.qml). The request only
+        // exists while the preview is up.
+        Timer {
+            id: previewDelay
+            interval: Kirigami.Units.toolTipDelay
+            onTriggered: preview.visible = dock.hoveredTile !== null
+        }
+
+        onHoveredTileChanged: {
+            if (hoveredTile) {
+                previewDelay.restart();
+            } else {
+                previewDelay.stop();
+                preview.visible = false;
+            }
+        }
+
+        PlasmaCore.Dialog {
+            id: preview
+
+            visualParent: dock.hoveredTile
+            location: Plasmoid.location
+            type: PlasmaCore.Dialog.Tooltip
+            backgroundHints: PlasmaCore.Dialog.NoBackground
+            hideOnWindowDeactivate: false
+            flags: Qt.WindowTransparentForInput | Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint
+
+            readonly property var task: dock.hoveredTile ? dock.hoveredTile.model : null
+            readonly property var windowId: {
+                const ids = preview.task ? preview.task.WinIdList : undefined;
+                return ids && ids.length > 0 ? ids[0] : undefined;
+            }
+
+            mainItem: Item {
+                implicitWidth: root.previewWidth
+                implicitHeight: card.height + root.previewLift
+
+                Rectangle {
+                    id: card
+
+                    anchors.top: parent.top
+                    anchors.left: parent.left
+                    width: root.previewWidth
+                    height: column.implicitHeight + root.previewPadding * 2
+
+                    radius: root.previewRadius
+                    color: Qt.rgba(13 / 255, 24 / 255, 17 / 255, 0.92)
+                    border.width: 1
+                    border.color: Qt.rgba(1, 1, 1, 0.16)
+
+                    Column {
+                        id: column
+
+                        x: root.previewPadding
+                        y: root.previewPadding
+                        width: card.width - root.previewPadding * 2
+                        spacing: 8
+
+                        Rectangle {
+                            width: parent.width
+                            height: Math.round(width * 9 / 16)
+                            visible: preview.windowId !== undefined
+                            radius: 6
+                            color: Qt.rgba(1, 1, 1, 0.05)
+                            clip: true
+
+                            PipeWire.PipeWireSourceItem {
+                                anchors.fill: parent
+                                nodeId: screencast.nodeId
+
+                                TaskManager.ScreencastingRequest {
+                                    id: screencast
+                                    uuid: preview.visible ? (preview.windowId ?? "") : ""
+                                }
+                            }
+                        }
+
+                        PC3.Label {
+                            width: parent.width
+                            horizontalAlignment: Text.AlignHCenter
+                            elide: Text.ElideRight
+                            text: preview.task ? (preview.task.AppName ?? "") : ""
+                            color: "#f2f7f2"
                         }
                     }
                 }
