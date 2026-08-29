@@ -28,7 +28,8 @@ at their rest position.
 | `1px solid rgba(255,255,255,0.18)` | Breeze's own hairline; borders set to `None` so nothing heavier is drawn |
 | `border-radius: 22px` | Klassy's `WindowCornerRadius=22` in `klassyrc`; nothing in stock Plasma clips a window to a radius |
 | `rgba(13,24,17,0.70)` / `0.60` glass | Klassy `ActiveTitleBarOpacity=70` / `InactiveTitleBarOpacity=60` with `ApplyOpacityToHeader`, and `BlurTransparentTitleBars` for the backdrop blur |
-| no app icon, no window buttons, title centred | `ButtonsOnLeft=""` and `ButtonsOnRight=""` in `kwinrc`, `TitleAlignment=AlignCenterFullWidth` in Klassy. Close with Alt+F4 or the titlebar's right-click menu. |
+| no app icon, no minimise/maximise, title centred | `ButtonsOnLeft=""` and `ButtonsOnRight="X"` in `kwinrc`, `TitleAlignment=AlignCenterFullWidth` in Klassy |
+| ember `oklch(0.70 0.16 25)` "release to close" | the close button's hover tile — `ButtonBackgroundColorsActive=AccentNegativeClose` picks up `ForegroundNegative`; `ShowCloseBackgroundNormally*=false` keeps it to a bare glyph until hovered |
 
 Klassy's settings live in **`~/.config/klassy/klassyrc`**, not `~/.config/klassyrc`.
 Writing to the latter is accepted and silently ignored. Two keys matter beyond

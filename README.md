@@ -16,7 +16,7 @@ Built and tested on **Fedora 44, Plasma 6.6.4, Wayland**.
 | Plasma theme | `naiture` — same palette for the shell, with background-contrast at the design's `saturate(170%)` |
 | Wallpaper | Generated from the design's own gradient, glows, mist band and 44-blade grass field, at your screen's resolution |
 | Panels | Floating, fit-to-content, 50px islands with adaptive translucency |
-| Windows | 22px rounded corners and translucent titlebars via Klassy, no app icon and no window buttons as in the design |
+| Windows | 22px rounded corners and translucent titlebars via Klassy, no app icon, no minimise/maximise — just a close button that stays invisible until hovered |
 | Fonts | Archivo for the UI, JetBrains Mono for anything fixed-width |
 | Konsole | `Naiture` profile and colour scheme, 82% opacity with blur |
 
@@ -134,8 +134,9 @@ a plain gradient.
 
 * **GTK apps.** Firefox, GNOME apps and Flatpaks keep their own theme.
 
-* **No window buttons.** The design has none, so neither does this. Close a
-  window with Alt+F4, or right-click its titlebar. To get them back:
+* **Only a close button.** The design has no window controls at all; this keeps
+  a single small close X, which shows nothing but its glyph until hovered and
+  then takes the ember tint. To get minimise and maximise back:
   `kwriteconfig6 --file kwinrc --group org.kde.kdecoration3 --key ButtonsOnRight IAX`
 * **Login and boot.** SDDM, the Plasma splash and GRUB are untouched.
 
