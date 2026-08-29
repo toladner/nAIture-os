@@ -30,10 +30,15 @@ QtObject {
     readonly property int sheetPadX: 22
     readonly property int sectionGap: 18
 
-    // How far the sheet floats above the island, and how close its right edge
-    // comes to the screen's. Plasma parks the dialog's window a few pixels over
-    // the panel, so the lift is spent partly on clearing that.
-    readonly property int sheetLift: 20
+    // How close the sheet's right edge comes to the screen's, and — matching it
+    // — how far its bottom edge floats above the island.
+    readonly property int sheetEdgeGapVertical: 4
+
+    // Plasma parks the dialog's window this far over the panel, so the lift has
+    // to cover that before any of it becomes daylight.
+    readonly property int islandOverlap: 7
+
+    readonly property int sheetLift: sheetEdgeGapVertical + islandOverlap
     readonly property int sheetEdgeGap: 4
 
     // The panel background's top margin, from tools/make_panel_svg.py. An
