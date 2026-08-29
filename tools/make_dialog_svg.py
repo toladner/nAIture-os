@@ -7,6 +7,10 @@ for exactly that path for an AppletPopup). Without one the theme falls back to
 Breeze's, which is colour-scheme aware and so comes out the right colour with
 the wrong shape: an 8px radius against a design that asks for 20px.
 
+It is not what the naiture sheets are drawn from — those paint themselves in a
+window that paints nothing, see plasmoids/*/contents/ui/Sheet.qml — but every
+other Plasma popup on the desktop is drawn from it.
+
 The design's sheet (design/naiture-canvas.dc.html):
 
     border-radius: 20px;
@@ -45,7 +49,7 @@ H = ROWS[2] + R
 
 VARIANTS = {
     #  name:        (fill,      fill opacity, hairline opacity)
-    "translucent": ("#0d1811", 0.85, 0.16),
+    "translucent": ("#0d1811", 0.94, 0.16),
     "opaque":      ("#0d1811", 1.00, 0.16),
 }
 
