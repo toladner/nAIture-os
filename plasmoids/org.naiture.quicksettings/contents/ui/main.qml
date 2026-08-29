@@ -46,7 +46,27 @@ PlasmoidItem {
     readonly property color accent: Kirigami.Theme.highlightColor
 
     Plasmoid.status: PlasmaCore.Types.ActiveStatus
-    preferredRepresentation: compactRepresentation
+    readonly property bool horizontal: Plasmoid.formFactor !== PlasmaCore.Types.Vertical
+
+    // The panel background contributes the design's 7px; the pill wants 20px
+    // each side of the time.
+    readonly property int sidePadding: 13
+
+    // Measured on the applet, because the label that would report it lives
+    // inside the representation and is created later.
+    TextMetrics {
+        id: timeMetrics
+        font.pointSize: Tokens.terminalPointSize
+        font.weight: Font.Medium
+        text: root.timeText
+    }
+
+    Layout.minimumWidth: horizontal ? Math.ceil(timeMetrics.width) + sidePadding * 2 : 0
+    Layout.preferredWidth: Layout.minimumWidth
+    Layout.fillHeight: horizontal
+    Layout.fillWidth: !horizontal
+
+    preferredRepresentation: fullRepresentation
     toolTipMainText: Qt.formatDate(clock.now, Locale.LongFormat)
     toolTipSubText: i18n("Quick settings")
 
@@ -167,15 +187,8 @@ PlasmoidItem {
 
     // --- the pill -------------------------------------------------------
 
-    compactRepresentation: Item {
+    fullRepresentation: Item {
         id: pill
-
-        // The panel background contributes the design's 7px; the pill wants
-        // 20px each side of the time.
-        readonly property int sidePadding: 13
-
-        Layout.minimumWidth: timeLabel.implicitWidth + sidePadding * 2
-        Layout.preferredWidth: Layout.minimumWidth
 
         PC3.Label {
             id: timeLabel

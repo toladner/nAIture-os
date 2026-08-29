@@ -225,9 +225,12 @@ peeks at the desktop. It is a separate applet on purpose: Plasma draws its
 sliver into the clock would stretch that bar past the time.
 
 A panel applet's **size hints belong on the `PlasmoidItem`, not on the
-representation**, and an applet with no popup shows its `fullRepresentation`
-inline. Get either wrong and the panel silently reserves its own default width —
-about 40px — and draws nothing in it. Plasma's own panel spacer is the model.
+representation**, and an applet that shows itself inline uses
+`fullRepresentation`. Get either wrong and Plasma answers with its own default:
+size hints in the wrong place reserve about 40px and draw nothing in it, and a
+`compactRepresentation` with no `fullRepresentation` to collapse from is
+replaced by a placeholder icon that does nothing when clicked. Both applets here
+are inline; Plasma's own panel spacer is the model.
 
 ## Things that will trip you up
 
