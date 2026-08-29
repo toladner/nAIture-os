@@ -376,16 +376,8 @@ It is full of `$` and backticks, so an unquoted heredoc expands it — a backtic
 in a comment ran as a command and silently ate the words around it. Placeholders
 plus `sed`, never interpolation.
 
-**Deferred: whether the console should be our own window.** Everything above is
-the ceiling of what configuration reaches. A small KF6 app around
-`konsolepart.so` — already installed, the component Yakuake and Kate embed —
-would make the tab strip ours: tabs on the titlebar's line, a marker that
-travels, our own `+` and `x`. Everything built here survives it, since the
-views, the scenes and `konsole/naiture-view` are all below that line. It is not
-being done yet, because it costs a compiler and five `-devel` packages at
-install time and this repo needs no root today. Revisit once the browser and the
-file explorer have been restyled, and decide for all three together rather than
-for the console alone.
+Everything above is the ceiling of what configuration reaches for the console.
+See **Deferred: windows of our own** at the end of this file.
 
 Verify without a screenshot: a running Konsole exports
 `org.kde.konsole.KXmlGuiWindow.isToolBarVisible` and
@@ -420,6 +412,9 @@ bit; the system's own service menus pass on the first test, so 644 looks
 correct right up until a user copy is refused. The symptom is the entry
 appearing in the menu and saying "not authorized" when clicked.
 
+See **Deferred: windows of our own** below: the tab bar is the clearest case yet
+for building, and the view is the case for building deeper than that.
+
 **Dolphin's own "Open Terminal Here" is gated three ways** and only the first is
 a setting: `ContextMenuSettings::showOpenTerminal()`, the item having to be a
 local directory (so never a file), and KIO folding the extra actions into an
@@ -428,6 +423,47 @@ local directory (so never a file), and KIO folding the extra actions into an
 Whether it is visible therefore depends on which service menus the machine
 happens to have. `dolphin/naiture-terminal.desktop` is ours instead, with
 `X-KDE-Priority=TopLevel`, and Dolphin's is turned off so there is one entry.
+
+## Deferred: windows of our own
+
+Both the console and the explorer now stop at the same wall, and the evidence is
+worth keeping together, because the decision is one decision for all of them and
+not one per application.
+
+**What configuration could not reach.** The console: the tab's close button and
+the new-tab `+` cannot be restyled or moved, and a marker cannot travel between
+tabs. The explorer: the tab bar cannot sit above the band even though the tab is
+what decides the location, and nothing in Dolphin takes a style sheet, so its
+rows can never be the start sheet's rows. Every one of these is a widget's
+internals, not a setting anybody forgot to expose.
+
+**There are two depths, and they cost differently.**
+
+*A window of our own, around a part that already exists.* `konsolepart.so` and
+`dolphinpart.so` are both installed — the components Yakuake, Kate and
+Konqueror embed. A small KF6 app hosting one gives us the whole frame: tabs on
+the titlebar's line, a marker that travels, our own `+` and `x`, and the tab
+strip above the band. It does **not** give us what is inside the part: the
+explorer's rows would still be Dolphin's item view, styled by Breeze.
+Everything built so far survives, since the views, the scenes and
+`konsole/naiture-view` all sit below that line.
+
+*Our own view as well.* To make a file row look like a row in the start sheet —
+the same icon, name, detail, hover and pin — the view itself has to be ours:
+QML over `KIO`'s directory model rather than `dolphinpart`. That is a
+materially bigger thing than a frame, and it is where a file manager stops
+being a reskin and starts being an application with its own bugs.
+
+**The cost is not the code.** It is that a compiled application puts a compiler
+and several `-devel` packages into an install that today needs no root at all,
+and turns `curl | bash` into something that can fail on a machine without a
+toolchain. That is a bad trade for one application and a reasonable one for
+three.
+
+**So: not yet.** Restyle the browser, find where *it* stops — it is GTK, so it
+will stop somewhere entirely different — and then decide for the console, the
+explorer and the browser together, at whichever of the two depths the evidence
+by then supports.
 
 ## Things that will trip you up
 
