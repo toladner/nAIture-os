@@ -3,6 +3,11 @@
   "source": "Claude Design canvas 598d2e7b-6845-4aad-99cf-3541c765effb",
   "note": "Authored in OKLCH; sRGB values produced by tools/oklch.py.",
 
+  "brand": {
+    "leafLight": { "oklch": "0.90 0.12 122", "hex": "#d0eb8f", "role": "the mark's light end" },
+    "leafDeep":  { "oklch": "0.65 0.15 150", "hex": "#3aa85b", "role": "the mark's deep end, and its corner" },
+    "note": "The naiture mark is brand, not accent: it does not follow scripts/accent.sh. tools/make_logo_svg.py draws it."
+  },
   "accent": {
     "sky":       { "oklch": "0.76 0.09 220", "hex": "#6abfd9", "role": "primary accent, selection, focus" },
     "skyBright": { "oklch": "0.80 0.09 220", "hex": "#77cce6", "role": "hover, active link" },

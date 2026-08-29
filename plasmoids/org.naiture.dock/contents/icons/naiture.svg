@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="117.659" height="117.659" viewBox="0 0 117.659 117.659">
+  <defs>
+    <linearGradient id="leaf" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f7ea9b"/>
+      <stop offset="1" stop-color="#c1ac14"/>
+    </linearGradient>
+    <radialGradient id="sheen" cx="0.34" cy="0.24" r="0.6">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.5"/>
+      <stop offset="0.55" stop-color="#ffffff" stop-opacity="0.09"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <path d="M 41.729,6.012 A 50.000,50.000 0 0 1 105.814,35.896 A 50.000,50.000 0 0 1 75.931,99.982 L 37.027,114.141 A 8.600,8.600 0 0 1 26.005,109.001 L 11.845,70.098 A 50.000,50.000 0 0 1 41.729,6.012 Z" fill="url(#leaf)"/>
+  <path d="M 41.729,6.012 A 50.000,50.000 0 0 1 105.814,35.896 A 50.000,50.000 0 0 1 75.931,99.982 L 37.027,114.141 A 8.600,8.600 0 0 1 26.005,109.001 L 11.845,70.098 A 50.000,50.000 0 0 1 41.729,6.012 Z" fill="url(#sheen)"/>
+</svg>
