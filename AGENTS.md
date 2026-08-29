@@ -195,14 +195,29 @@ through the same APIs Plasma's own applets use. It exists because Plasma's
 system tray always shows an expander chevron beside the clock when anything is
 hidden, and its popup is Plasma's list rather than the design's sheet.
 
-Its popup takes the design's width and padding but not its 20px radius. On
-Plasma 6.7 the popup **window** paints its own background: the theme's
-`dialogs/background.svg` is not consulted for an applet popup (replacing that
-file with a solid magenta proves it), and
-`Plasmoid.backgroundHints: NoBackground` does not stop it either. Drawing a
-rounded rectangle inside only puts fake corners in a square box, which is what
-it looked like. The shape, the shadow and the base colour come from the popup
-and the colour scheme.
+Its sheet is **not** Plasma's applet popup. On 6.7 that window paints an opaque
+background of its own: the theme's `dialogs/background.svg` is never consulted
+for it (swap that file for solid magenta and nothing changes), and
+`Plasmoid.backgroundHints: NoBackground` does not stop it either, so a rounded
+rectangle drawn inside only puts fake corners in a square box. A
+`PlasmaCore.Dialog` does honour `NoBackground`, so the sheet lives in one and
+`Plasmoid.expanded` is never used. Three things follow:
+
+* The dialog sizes itself from `mainItem`'s **implicit** size and assigns the
+  real one back, so the item must not set its own width and height — and the
+  content inside must not be anchored to it either, or the implicit height is a
+  loop and the dialog comes out at its default 400x300.
+* `compactRepresentationItem` is null for an applet that never sets
+  `Plasmoid.expanded`, so the dialog's `visualParent` is the applet itself.
+* Plasma's "this applet is open" accent bar rides on `Plasmoid.expanded`, so
+  the pill draws that bar itself.
+
+**The island cannot reach the screen's corner.** Plasma insets an applet from
+the panel edge by the theme background's `hint-*-margin` *plus* about 8px of its
+own — paint an applet solid and read off where it ends — and no theme setting
+reaches the remainder. `scripts/screen-edges.sh` gives the bottom-right screen
+edge the show-desktop action, which does reach the corner; the sliver stays a
+quiet click target just inside it.
 
 `plasmoids/org.naiture.showdesktop` is the sliver at the screen's corner that
 peeks at the desktop. It is a separate applet on purpose: Plasma draws its

@@ -10,6 +10,7 @@
  */
 import QtQuick
 import QtQuick.Layouts
+import org.kde.kirigami as Kirigami
 import org.kde.plasma.components as PC3
 
 RowLayout {
@@ -17,13 +18,20 @@ RowLayout {
 
     required property string name
     required property color tint
+
+    // An icon before the label. Give it an action and it becomes a button —
+    // the speaker mutes, the sun is only a marker.
+    property string iconName: ""
+    property bool iconIsButton: false
+
+    signal iconActivated()
     // 0..1
     required property real value
     property bool available: true
 
     signal moved(real value)
 
-    spacing: 12
+    spacing: 8
     opacity: available ? 1 : 0.4
 
     function setFromX(x) {
@@ -33,9 +41,32 @@ RowLayout {
         slider.moved(Math.max(0, Math.min(1, x / track.width)));
     }
 
+    Kirigami.Icon {
+        Layout.preferredWidth: Kirigami.Units.iconSizes.small
+        Layout.preferredHeight: Kirigami.Units.iconSizes.small
+        visible: slider.iconName !== ""
+        source: slider.iconName
+        opacity: !slider.iconIsButton ? 0.6 : iconArea.containsMouse ? 1 : 0.75
+
+        Behavior on opacity {
+            NumberAnimation { duration: 150 }
+        }
+
+        MouseArea {
+            id: iconArea
+            anchors.fill: parent
+            anchors.margins: -4
+            enabled: slider.iconIsButton && slider.available
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onClicked: slider.iconActivated()
+        }
+    }
+
     PC3.Label {
         Layout.preferredWidth: Tokens.sliderLabelWidth
         text: slider.name
+        elide: Text.ElideRight
         font.pointSize: Tokens.pt(11.5)
         color: Qt.rgba(Tokens.text.r, Tokens.text.g, Tokens.text.b, 0.6)
     }

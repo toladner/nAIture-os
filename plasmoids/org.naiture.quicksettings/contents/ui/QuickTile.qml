@@ -14,12 +14,16 @@
  */
 import QtQuick
 import QtQuick.Layouts
+import org.kde.kirigami as Kirigami
 import org.kde.plasma.components as PC3
 
 Rectangle {
     id: tile
 
+    // The design draws these as typographic glyphs. A tile can take a real
+    // icon instead where one says the thing better than a glyph can.
     required property string glyph
+    property string iconName: ""
     required property string name
     required property string detail
     required property bool on
@@ -85,13 +89,26 @@ Rectangle {
                 ColorAnimation { duration: 180 }
             }
 
+            readonly property color mark: tile.on && tile.available
+                ? Qt.lighter(tile.accent, 1.45)
+                : Qt.rgba(Tokens.text.r, Tokens.text.g, Tokens.text.b, 0.5)
+
             PC3.Label {
                 anchors.centerIn: parent
+                visible: tile.iconName === ""
                 text: tile.glyph
                 font.pointSize: Tokens.pt(14)
-                color: tile.on && tile.available
-                    ? Qt.lighter(tile.accent, 1.45)
-                    : Qt.rgba(Tokens.text.r, Tokens.text.g, Tokens.text.b, 0.5)
+                color: parent.mark
+            }
+
+            Kirigami.Icon {
+                anchors.centerIn: parent
+                visible: tile.iconName !== ""
+                width: Kirigami.Units.iconSizes.small
+                height: Kirigami.Units.iconSizes.small
+                source: tile.iconName
+                color: parent.mark
+                isMask: true
             }
         }
 

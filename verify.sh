@@ -121,6 +121,14 @@ else
   record dock_proximity fail "KWin script not installed"
 fi
 
+# --- show desktop at the corner ---
+# The island's sliver cannot reach the screen's corner, so the corner itself is
+# a KWin screen edge.
+corner="$(kreadconfig6 --file kwinrc --group ElectricBorders --key BottomRight 2>/dev/null)"
+[[ "$corner" == "ShowDesktop" ]] \
+  && record screen_corner ok "bottom-right shows the desktop" \
+  || record screen_corner warn "bottom-right corner is '${corner:-None}'"
+
 # --- window decoration ---
 deco="$(kreadconfig6 --file kwinrc --group org.kde.kdecoration3 --key library 2>/dev/null)"
 if [[ "$deco" == "org.kde.klassy" ]]; then

@@ -252,6 +252,7 @@ apply() {
   fi
 
   bash "$REPO/scripts/accent.sh"
+  bash "$REPO/scripts/screen-edges.sh"
   bash "$REPO/scripts/window-decoration.sh"
   bash "$REPO/scripts/widget-style.sh"
   bash "$REPO/scripts/dock-proximity.sh"

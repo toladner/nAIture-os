@@ -34,8 +34,19 @@ import org.kde.plasma.workspace.dbus as DBus
 PlasmoidItem {
     id: root
 
-    // Just wide enough to be hit at the screen corner without being a button.
-    readonly property int stripWidth: 8
+    // Windows' arrangement: a separator, and everything to the right of it is
+    // the button.
+    //
+    // It cannot reach the screen's corner. Plasma insets an applet from the
+    // panel's edge by the theme's background margin *plus* about 8px of its own
+    // — measured by painting this applet solid and reading off where it ends —
+    // and no theme setting reaches that. So the corner itself is handled by a
+    // KWin screen edge (scripts/screen-edges.sh), and this stays a quiet click
+    // target just inside it rather than growing to compensate.
+    readonly property int separatorWidth: 1
+    readonly property int separatorGap: 3
+    readonly property int buttonWidth: 8
+    readonly property int stripWidth: separatorWidth + separatorGap + buttonWidth
 
     readonly property bool horizontal: Plasmoid.formFactor !== PlasmaCore.Types.Vertical
 
@@ -74,25 +85,38 @@ PlasmoidItem {
         });
     }
 
-    fullRepresentation: Item {
-        HoverHandler {
-            id: hover
-            cursorShape: Qt.PointingHandCursor
-        }
+    fullRepresentation: MouseArea {
+        id: strip
 
-        TapHandler {
-            onTapped: root.toggle()
-        }
+        hoverEnabled: true
+        cursorShape: Qt.PointingHandCursor
+        onClicked: root.toggle()
 
-        // The only mark it makes: a hairline that comes up under the pointer,
-        // and stays up while the desktop is showing.
+        // The separator. It never reacts — it is there to say where the island
+        // ends and the button begins.
         Rectangle {
-            anchors.centerIn: parent
-            width: root.horizontal ? 1 : Math.round(parent.width * 0.55)
-            height: root.horizontal ? Math.round(parent.height * 0.55) : 1
+            anchors.left: root.horizontal ? parent.left : undefined
+            anchors.top: root.horizontal ? undefined : parent.top
+            anchors.horizontalCenter: root.horizontal ? undefined : parent.horizontalCenter
+            anchors.verticalCenter: root.horizontal ? parent.verticalCenter : undefined
+
+            width: root.horizontal ? root.separatorWidth : Math.round(parent.width * 0.55)
+            height: root.horizontal ? Math.round(parent.height * 0.55) : root.separatorWidth
             radius: 0.5
+            color: "#f2f7f2"
+            opacity: 0.1
+        }
+
+        // The button: the space past the separator, lit while the pointer is
+        // over it and while the desktop is being held back.
+        Rectangle {
+            anchors.fill: parent
+            anchors.leftMargin: root.horizontal ? root.separatorWidth + root.separatorGap : 0
+            anchors.topMargin: root.horizontal ? 0 : root.separatorWidth + root.separatorGap
+
+            radius: 3
             color: root.showing ? Kirigami.Theme.highlightColor : "#f2f7f2"
-            opacity: hover.hovered || root.showing ? 0.6 : 0.18
+            opacity: root.showing ? 0.28 : strip.containsMouse ? 0.1 : 0
 
             Behavior on opacity {
                 NumberAnimation { duration: 150 }
