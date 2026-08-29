@@ -80,13 +80,17 @@ PlasmoidItem {
     readonly property int separatorWidth: 1
     readonly property int separatorSpacing: 10
 
-    // The hover preview, in the sheet's language.
-    readonly property int previewWidth: 240
-    readonly property int previewPadding: 10
-    readonly property int previewRadius: 14
+    // The hover preview, in the quick-settings sheet's language and at its
+    // width.
+    readonly property int previewWidth: 400
+    readonly property int previewPadding: 12
+    readonly property int previewSpacing: 8
+    readonly property int previewRadius: 20
 
     // The same daylight the quick-settings sheet keeps above the island.
     readonly property int previewLift: 4 + islandMargin
+
+    readonly property int previewLabelHeight: Kirigami.Units.gridUnit
 
     // The rule wants the same daylight on both sides. On its left that gap is
     // the panel's own spacing between applets — the launcher is a separate
@@ -150,6 +154,11 @@ PlasmoidItem {
         // over one, otherwise the active window's.
         property Item hoveredTile: null
         property Item activeTile: null
+
+        // The preview lags the pointer: it stays up long enough to walk onto,
+        // which is what makes a thumbnail clickable.
+        property Item previewTile: null
+        readonly property alias hideDelay: previewHide
 
         readonly property Item markedTile: hoveredTile ?? activeTile
 
@@ -320,81 +329,177 @@ PlasmoidItem {
         Timer {
             id: previewDelay
             interval: Kirigami.Units.toolTipDelay
-            onTriggered: preview.visible = dock.hoveredTile !== null
+            onTriggered: {
+                dock.previewTile = dock.hoveredTile;
+                preview.visible = dock.previewTile !== null;
+            }
+        }
+
+        Timer {
+            id: previewHide
+            interval: 200
+            onTriggered: {
+                preview.visible = false;
+                dock.previewTile = null;
+            }
         }
 
         onHoveredTileChanged: {
             if (hoveredTile) {
-                previewDelay.restart();
+                previewHide.stop();
+                if (preview.visible) {
+                    dock.previewTile = hoveredTile;
+                } else {
+                    previewDelay.restart();
+                }
             } else {
                 previewDelay.stop();
-                preview.visible = false;
+                previewHide.restart();
             }
         }
 
         PlasmaCore.Dialog {
             id: preview
 
-            visualParent: dock.hoveredTile
+            visualParent: dock.previewTile
             location: Plasmoid.location
             type: PlasmaCore.Dialog.Tooltip
             backgroundHints: PlasmaCore.Dialog.NoBackground
             hideOnWindowDeactivate: false
-            flags: Qt.WindowTransparentForInput | Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint
+            flags: Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint
 
-            readonly property var task: dock.hoveredTile ? dock.hoveredTile.model : null
-            readonly property var windowId: {
+            readonly property var task: dock.previewTile ? dock.previewTile.model : null
+
+            // With GroupApplications on, a tile can stand for several windows,
+            // and a group parent's WinIdList carries every one of them — so two
+            // Konsoles get two thumbnails, the way Windows shows them.
+            readonly property var windowIds: {
                 const ids = preview.task ? preview.task.WinIdList : undefined;
-                return ids && ids.length > 0 ? ids[0] : undefined;
+                return ids ?? [];
             }
+
+            readonly property int shotCount: Math.max(1, windowIds.length)
+
+            // With one preview the name says which app this is; with several,
+            // the icon above them already has.
+            readonly property bool showName: shotCount <= 1
+            readonly property int shotWidth:
+                (root.previewWidth - root.previewPadding * 2
+                 - root.previewSpacing * (shotCount - 1)) / shotCount
+            readonly property int shotHeight: Math.round(shotWidth * 9 / 16)
+
+            // The dialog reads mainItem's implicit size early and keeps what it
+            // first gets, so this is worked out from numbers the applet already
+            // knows rather than from the card inside it — a height that waits
+            // for a child arrives as 0 and the card ends up clipped.
+            readonly property int cardHeight:
+                root.previewPadding * 2 + shotHeight
+                + (showName ? root.previewSpacing + root.previewLabelHeight : 0)
 
             mainItem: Item {
                 implicitWidth: root.previewWidth
-                implicitHeight: card.height + root.previewLift
+                implicitHeight: preview.cardHeight + root.previewLift
 
                 Rectangle {
-                    id: card
-
                     anchors.top: parent.top
                     anchors.left: parent.left
                     width: root.previewWidth
-                    height: column.implicitHeight + root.previewPadding * 2
+                    height: preview.cardHeight
 
                     radius: root.previewRadius
                     color: Qt.rgba(13 / 255, 24 / 255, 17 / 255, 0.92)
                     border.width: 1
                     border.color: Qt.rgba(1, 1, 1, 0.16)
 
-                    Column {
-                        id: column
+                    // Moving onto the preview must not dismiss it, or a
+                    // thumbnail could never be clicked.
+                    HoverHandler {
+                        onHoveredChanged: if (hovered) {
+                            dock.hideDelay.stop();
+                        } else {
+                            dock.hideDelay.restart();
+                        }
+                    }
 
+                    Column {
                         x: root.previewPadding
                         y: root.previewPadding
-                        width: card.width - root.previewPadding * 2
-                        spacing: 8
+                        width: parent.width - root.previewPadding * 2
+                        spacing: root.previewSpacing
 
-                        Rectangle {
+                        Row {
                             width: parent.width
-                            height: Math.round(width * 9 / 16)
-                            visible: preview.windowId !== undefined
-                            radius: 6
-                            color: Qt.rgba(1, 1, 1, 0.05)
-                            clip: true
+                            spacing: root.previewSpacing
 
-                            PipeWire.PipeWireSourceItem {
-                                anchors.fill: parent
-                                nodeId: screencast.nodeId
+                            Repeater {
+                                model: preview.windowIds
 
-                                TaskManager.ScreencastingRequest {
-                                    id: screencast
-                                    uuid: preview.visible ? (preview.windowId ?? "") : ""
+                                delegate: Rectangle {
+                                    id: shot
+
+                                    required property var modelData
+                                    required property int index
+
+                                    width: preview.shotWidth
+                                    height: preview.shotHeight
+                                    radius: 6
+                                    color: shotPointer.hovered
+                                        ? Qt.rgba(root.accent.r, root.accent.g, root.accent.b, 0.22)
+                                        : Qt.rgba(1, 1, 1, 0.05)
+                                    border.width: 1
+                                    border.color: shotPointer.hovered
+                                        ? Qt.rgba(root.accent.r, root.accent.g, root.accent.b, 0.55)
+                                        : Qt.rgba(1, 1, 1, 0.09)
+                                    clip: true
+
+                                    Behavior on color {
+                                        ColorAnimation { duration: 120 }
+                                    }
+
+                                    PipeWire.PipeWireSourceItem {
+                                        anchors.fill: parent
+                                        anchors.margins: 1
+                                        nodeId: screencast.nodeId
+
+                                        // The screencast only runs while the
+                                        // preview is up.
+                                        TaskManager.ScreencastingRequest {
+                                            id: screencast
+                                            uuid: preview.visible ? shot.modelData : ""
+                                        }
+                                    }
+
+                                    HoverHandler {
+                                        id: shotPointer
+                                        cursorShape: Qt.PointingHandCursor
+                                    }
+
+                                    TapHandler {
+                                        onTapped: {
+                                            // A group's windows are children of
+                                            // its row, so a single window and
+                                            // one of several are different
+                                            // indices.
+                                            const taskRowIndex = dock.previewTile.index;
+                                            const modelIndex = preview.windowIds.length > 1
+                                                ? tasksModel.makeModelIndex(taskRowIndex, shot.index)
+                                                : tasksModel.makeModelIndex(taskRowIndex);
+                                            tasksModel.requestActivate(modelIndex);
+                                            dock.hideDelay.stop();
+                                            preview.visible = false;
+                                            dock.previewTile = null;
+                                        }
+                                    }
                                 }
                             }
                         }
 
                         PC3.Label {
+                            visible: preview.showName
                             width: parent.width
+                            height: root.previewLabelHeight
                             horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
                             elide: Text.ElideRight
                             text: preview.task ? (preview.task.AppName ?? "") : ""
                             color: "#f2f7f2"

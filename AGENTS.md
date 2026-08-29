@@ -244,12 +244,24 @@ module behind Plasma's own task manager, so the window list, the filtering and
 every request are its code. What this applet owns is only how a task looks and
 moves.
 
-Hovering shows a live thumbnail rather than the app's name. On Wayland there is
+Hovering shows live thumbnails rather than the app's name. On Wayland there is
 no window pixmap to borrow: a thumbnail is a screencast, requested per window
 through `TaskManager.ScreencastingRequest` and rendered by
 `PipeWire.PipeWireSourceItem` — the pair Plasma's own tooltip uses
-(`taskmanager/qml/PipeWireThumbnail.qml`). The request exists only while the
+(`taskmanager/qml/PipeWireThumbnail.qml`). The requests exist only while the
 preview is up.
+
+Grouping is on, so a tile can stand for several windows; a group parent's
+`WinIdList` carries every one of them, and each gets its own thumbnail. Clicking
+one raises that window: a group's windows are *children* of its row, so it is
+`makeModelIndex(row, child)` for one of several and `makeModelIndex(row)` for a
+lone window.
+
+The preview lags the pointer on the way out — a short hide timer that the
+preview's own hover cancels — because a thumbnail you cannot walk onto cannot be
+clicked. Its size is worked out on the applet rather than from the card inside
+it, for the same reason the quick-settings sheet's is: the dialog reads
+`mainItem`'s implicit size early and keeps what it first gets.
 
 An icon lifts from its own baseline, so its resting size is chosen *backwards*
 from the room available — the island's content height plus what is left of the
