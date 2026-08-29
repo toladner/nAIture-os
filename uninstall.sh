@@ -41,6 +41,7 @@ bash "$(dirname "${BASH_SOURCE[0]}")/scripts/screen-edges.sh" --restore >/dev/nu
 
 rm -f  "$DATA/color-schemes/Naiture.colors"
 rm -rf "$DATA/plasma/desktoptheme/naiture"
+rm -rf "$DATA/plasma/plasmoids/org.naiture.dock"
 rm -rf "$DATA/plasma/plasmoids/org.naiture.quicksettings"
 rm -rf "$DATA/plasma/plasmoids/org.naiture.showdesktop"
 rm -rf "$DATA/wallpapers/naiture"

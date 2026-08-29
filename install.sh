@@ -101,7 +101,7 @@ install_assets() {
 
   # The time pill with its quick-settings sheet, and the show-desktop sliver.
   mkdir -p "$DATA/plasma/plasmoids"
-  for applet in org.naiture.quicksettings org.naiture.showdesktop; do
+  for applet in org.naiture.dock org.naiture.quicksettings org.naiture.showdesktop; do
     rm -rf "$DATA/plasma/plasmoids/$applet"
     cp -a "$REPO/plasmoids/$applet" "$DATA/plasma/plasmoids/$applet"
   done

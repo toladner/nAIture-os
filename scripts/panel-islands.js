@@ -22,7 +22,7 @@ function island(applets) {
 
 island([
   "org.kde.plasma.kickoff",
-  "org.kde.plasma.icontasks"
+  "org.naiture.dock"
 ]);
 
 // The design's time pill opens a panel of quick tiles — Wi-Fi, Bluetooth,

@@ -186,7 +186,7 @@ for a panel. Three things to know:
   running the old code. `scripts/dock-proximity.sh` works around it by loading
   the repo copy for the current session; a fresh login uses the installed one.
 
-## The two applets
+## The three applets
 
 `plasmoids/org.naiture.quicksettings` is the time pill and the design's
 quick-settings sheet — Wi-Fi, Bluetooth, sound, do not disturb, aeroplane mode,
@@ -224,6 +224,30 @@ inside it.
 `scripts/screen-edges.sh` quiets both screen corners, because an action that
 fires on a shove of the pointer is easy to trigger by accident with the island's
 controls down there.
+
+`plasmoids/org.naiture.dock` replaces Plasma's task manager, for three reasons
+that are all unreachable from outside it:
+
+* The icon greys on hover. `taskmanager/qml/Task.qml` binds
+  `Kirigami.Icon.active` to `highlighted`, which is plain `containsMouse`, and
+  Kirigami feeds that into its icon shader as a hardcoded `0.7` highlight
+  (`kirigami/src/primitives/icon.cpp`). `taskHoverEffect` gates only the frame
+  behind the icon. No config, theme or SVG reaches the uniform.
+* Icons cannot grow under the pointer — each is sized to the panel with no
+  scale to animate.
+* The active marker is a 9-slice frame swapped per tile, so it can only blink
+  in and out. It cannot travel between tiles, nor leave one to sit on the
+  island's edge.
+
+Everything else still comes from Plasma: `org.kde.taskmanager` is the public QML
+module behind Plasma's own task manager, so the window list, the filtering and
+every request are its code. What this applet owns is only how a task looks and
+moves.
+
+An icon lifts from its own baseline, so its resting size is chosen *backwards*
+from the room available — the island's content height plus what is left of the
+margin once the marker and a little daylight are taken out. Size the icon to the
+content height instead and it climbs into the marker on hover.
 
 `plasmoids/org.naiture.showdesktop` is the sliver at the screen's corner that
 peeks at the desktop. It is a separate applet on purpose: Plasma draws its

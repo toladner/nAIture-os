@@ -1,0 +1,18 @@
+{
+    "KPackageStructure": "Plasma/Applet",
+    "KPlugin": {
+        "Id": "org.naiture.dock",
+        "Name": "naiture Dock",
+        "Description": "The design's switcher: icons that lift under the pointer, and one bar that slides to the active window",
+        "Category": "Windows and Tasks",
+        "Icon": "preferences-system-windows",
+        "License": "MIT",
+        "Authors": [
+            {
+                "Name": "naiture"
+            }
+        ],
+        "Website": "https://github.com/toladner/nAIture-os"
+    },
+    "X-Plasma-API-Minimum-Version": "6.0"
+}

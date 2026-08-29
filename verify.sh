@@ -158,7 +158,10 @@ kprofile="$(kreadconfig6 --file konsolerc --group "Desktop Entry" --key DefaultP
   || record konsole warn "default profile is '${kprofile:-unset}'"
 
 # --- assets on disk ---
-for path in "$DATA/color-schemes/Naiture.colors" \
+for path in "$DATA/plasma/plasmoids/org.naiture.dock/metadata.json" \
+            "$DATA/plasma/plasmoids/org.naiture.quicksettings/metadata.json" \
+            "$DATA/plasma/plasmoids/org.naiture.showdesktop/metadata.json" \
+            "$DATA/color-schemes/Naiture.colors" \
             "$DATA/plasma/desktoptheme/naiture/metadata.json" \
             "$DATA/wallpapers/naiture/metadata.json" \
             "$DATA/konsole/Naiture.colorscheme"; do
