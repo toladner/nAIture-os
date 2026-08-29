@@ -1,11 +1,14 @@
 # naiture
 
-A KDE Plasma 6 theme. Teal dusk over a moss field, floating islands instead of
-a taskbar, and windows that look out on the weather.
+An AI-first KDE Plasma 6 desktop, cut from one design. Dark green dusk, two
+floating islands instead of a taskbar, and sheets where a desktop usually puts
+menus. Claude sits in the launcher beside your apps and opens in a console of
+its own — and every console tab looks out of a different window of the same
+world.
 
 Built and tested on **Fedora 44, Plasma 6.7, Wayland**. Nothing needs root.
 
-![the naiture wallpaper](wallpapers/naiture/contents/screenshot.png)
+![A Claude Code console over its own view of the moss field, the quick-settings sheet open at the lower right, and the two islands along the bottom edge](docs/screenshots/desktop.png)
 
 ## Install
 
