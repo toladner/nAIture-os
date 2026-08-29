@@ -95,8 +95,10 @@ PlasmoidItem {
     readonly property int previewSpacing: 8
     readonly property int previewRadius: 20
 
-    // The same daylight the quick-settings sheet keeps above the island.
-    readonly property int previewLift: 4 + islandMargin
+    // The card rises out of the island rather than floating over it: its
+    // bottom runs into the island and is squared off, so there is no bottom
+    // edge to see — the same shape the islands themselves have.
+    readonly property int previewLift: 0
 
     readonly property int previewLabelHeight: Kirigami.Units.gridUnit
 
@@ -355,6 +357,7 @@ PlasmoidItem {
             onTriggered: {
                 dock.previewTile = dock.hoveredTile;
                 preview.visible = dock.previewTile !== null;
+                preview.centreOnTile();
             }
         }
 
@@ -373,6 +376,7 @@ PlasmoidItem {
                 previewHide.stop();
                 if (preview.visible) {
                     dock.previewTile = hoveredTile;
+                    Qt.callLater(preview.centreOnTile);
                 } else {
                     previewDelay.restart();
                 }
@@ -393,6 +397,27 @@ PlasmoidItem {
             flags: Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint
 
             readonly property var task: dock.previewTile ? dock.previewTile.model : null
+
+            // Plasma centres a dialog on its visual parent only until the
+            // screen gets in the way; a card several thumbnails wide is exactly
+            // the case where it stops. Re-centre it on the icon once Plasma has
+            // finished placing it, and keep it on the screen.
+            onVisibleChanged: if (visible) {
+                Qt.callLater(centreOnTile);
+            }
+
+            function centreOnTile(): void {
+                const tile = dock.previewTile;
+                const output = preview.screen;
+                if (!tile || !output) {
+                    return;
+                }
+                const centre = tile.mapToGlobal(tile.width / 2, 0);
+                const leftmost = output.virtualX;
+                const rightmost = output.virtualX + output.width - preview.width;
+                preview.x = Math.round(
+                    Math.max(leftmost, Math.min(rightmost, centre.x - preview.width / 2)));
+            }
 
             // With GroupApplications on, a tile can stand for several windows,
             // and a group parent's WinIdList carries every one of them — so two
@@ -441,7 +466,10 @@ PlasmoidItem {
                     width: preview.cardWidth
                     height: preview.cardHeight
 
-                    radius: root.previewRadius
+                    topLeftRadius: root.previewRadius
+                    topRightRadius: root.previewRadius
+                    bottomLeftRadius: 0
+                    bottomRightRadius: 0
                     color: Qt.rgba(13 / 255, 24 / 255, 17 / 255, 0.92)
                     border.width: 1
                     border.color: Qt.rgba(1, 1, 1, 0.16)

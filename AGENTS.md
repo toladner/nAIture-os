@@ -267,6 +267,13 @@ manager makes for its tooltips: `highlightWindows` on
 let go. Every path that closes the preview has to let go, or the desktop stays
 dimmed around a window nobody is pointing at.
 
+The card rises out of the island rather than floating over it: its bottom runs
+into the island and its bottom corners are square, so there is no bottom edge to
+see — the islands' own shape. It is also re-centred on the icon by hand once
+Plasma has placed it, because Plasma centres a dialog on its visual parent only
+until the screen gets in the way, and a card several thumbnails wide is exactly
+where it stops.
+
 The preview lags the pointer on the way out — a short hide timer that the
 preview's own hover cancels — because a thumbnail you cannot walk onto cannot be
 clicked. Its size is worked out on the applet rather than from the card inside
