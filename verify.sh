@@ -5,6 +5,7 @@
 #   --json    machine-readable output
 set -uo pipefail
 
+REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CONF="${XDG_CONFIG_HOME:-$HOME/.config}"
 DATA="${XDG_DATA_HOME:-$HOME/.local/share}"
 APPLETSRC="$CONF/plasma-org.kde.plasma.desktop-appletsrc"
@@ -90,6 +91,11 @@ else
   # Geometry lives in plasmashellrc, not with the containment — and thickness
   # lives one group deeper than the rest, in [Panel <id>][Defaults], which is
   # the only place PanelView::setThickness reads it from.
+  # The height comes from the script that writes it, so the two cannot drift.
+  want_thickness="$(sed -n 's/^THICKNESS="\${NAITURE_PANEL_THICKNESS:-\([0-9]*\)}"/\1/p' \
+                    "$REPO/scripts/panel-style.sh")"
+  want_thickness="${want_thickness:-38}"
+
   styled=0
   for id in "${panels[@]}"; do
     t="$(kreadconfig6 --file plasmashellrc --group PlasmaViews --group "Panel $id" --group Defaults --key thickness 2>/dev/null)"
@@ -100,10 +106,11 @@ else
     # the theme's panel-background.svg rather than by Plasma's floating mode,
     # and reserve no space so a maximised window runs underneath them (3 =
     # WindowsGoBelow).
-    [[ "$t" == "42" && "$f" == "0" && "$l" == "1" && "$v" == "3" ]] && styled=$(( styled + 1 ))
+    [[ "$t" == "$want_thickness" && "$f" == "0" && "$l" == "1" && "$v" == "3" ]] \
+      && styled=$(( styled + 1 ))
   done
   if [[ $styled -eq ${#panels[@]} ]]; then
-    record panels ok "${#panels[@]} panel(s), all 42px, flush, fit-to-content, no reserved space"
+    record panels ok "${#panels[@]} panel(s), all ${want_thickness}px, flush, fit-to-content, no reserved space"
   else
     record panels fail "$styled of ${#panels[@]} panel(s) styled (see plasmashellrc)"
   fi

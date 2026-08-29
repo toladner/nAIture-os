@@ -60,8 +60,10 @@ PlasmoidItem {
         return extent > 0 ? extent : Kirigami.Units.iconSizes.medium;
     }
 
-    // The design's dock spaces its tiles 8px apart.
-    readonly property int tileSpacing: 8
+    // The design's dock spaces its tiles 8px apart. Ours run wider: the icons
+    // fill their tiles now, so at 8px they touched at the corners and the row
+    // read as one block rather than as separate things.
+    readonly property int tileSpacing: 12
 
     // How far an icon lifts under the pointer. Neighbours stay put: the island
     // is sized to its contents, so growing the row would make the whole island
