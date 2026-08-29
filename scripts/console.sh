@@ -34,14 +34,35 @@ REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DATA="${XDG_DATA_HOME:-$HOME/.local/share}"
 VIEWS=12
 
-# The tab bar is deliberately accent-free. Everything else in naiture that
-# marks "this one" uses the accent, but a tab strip marks one of twelve things
-# at all times, and an accent that is always on stops meaning anything. The
-# selected tab is a lifted surface and full-strength text instead — which is
-# also why nothing here has to be rewritten when the accent changes.
+# The selected tab carries the accent on its bottom edge — the same edge the
+# dock's marker rides, under the thing it marks rather than over it.
+#
+# It cannot travel between tabs the way the dock's does. That marker is ours,
+# in QML, and it animates its own x; this is Konsole's QTabBar dressed in a Qt
+# style sheet, and a style sheet has no animation in it. Marking the selected
+# tab is the whole of what is reachable without owning the widget.
+#
+# The colour is written in rather than named, because a style sheet cannot ask
+# the colour scheme for anything — so this is the one place in the theme where
+# an accent is baked into a file, and scripts/accent.sh calls back here
+# (`--tabbar`) whenever it changes so the two cannot drift.
 write_tabbar_css() {
   install -d "$DATA/naiture"
-  cat > "$DATA/naiture/konsole-tabbar.css" <<'CSS'
+
+  # kdeglobals holds it as "r,g,b"; the palette's gold is the fallback for a
+  # desktop where the accent has not been written yet.
+  local accent
+  accent="$(kreadconfig6 --file kdeglobals --group General --key AccentColor 2>/dev/null)"
+  [[ "$accent" =~ ^[0-9]+,[0-9]+,[0-9]+$ ]] || accent="222,204,96"
+
+  # Half-strength against the strip, for the bar a hovered tab shows. Blended
+  # here rather than written as rgba(), because the bar is a border colour and
+  # a translucent border would let the tab's own background through it.
+  local accent_dim
+  accent_dim="$(IFS=,; set -- $accent
+    printf 'rgb(%d, %d, %d)' $(( ($1 + 13) / 2 )) $(( ($2 + 20) / 2 )) $(( ($3 + 16) / 2 )))"
+  accent="rgb(${accent//,/, })"
+  cat > "$DATA/naiture/konsole-tabbar.css" <<CSS
 /* Written by scripts/console.sh — edit that, not this. */
 
 /* The strip itself is the window's own surface, so the band at the top of a
@@ -56,10 +77,15 @@ QTabBar {
 
 /* A tab is a shape only when it is the one you are looking at. The rest are
    text on the band — no outlines, no separators, nothing to count. */
+/* Every state carries the same 2px border and differs only in what colour the
+   bottom edge of it is. Qt draws a rounded border box as one shape, and giving
+   one side a different *width* from the others makes it fall back to filling
+   the whole shape in the border colour — which is a tab gone entirely accent.
+   So the width never changes; only the colour does. */
 QTabBar::tab {
     background: transparent;
     color: rgba(242, 247, 242, 0.72);
-    border: 1px solid transparent;
+    border: 2px solid transparent;
     border-radius: 9px;
     padding: 8px 6px 8px 14px;
     margin: 5px 3px;
@@ -69,12 +95,17 @@ QTabBar::tab {
 
 QTabBar::tab:hover {
     background: rgba(240, 248, 240, 0.06);
+    border-bottom-color: ${accent_dim};
     color: #f2f7f2;
 }
 
 QTabBar::tab:selected {
     background: #18241c;
-    border: 1px solid rgba(240, 248, 240, 0.07);
+    border-bottom-color: ${accent};
+    /* Qt draws a border along the radius, so a 9px bottom corner would bend
+       the bar into a smile. Nearly square down there keeps it a bar. */
+    border-bottom-left-radius: 2px;
+    border-bottom-right-radius: 2px;
     color: #f2f7f2;
 }
 
@@ -82,20 +113,17 @@ QTabBar::tab:selected:hover {
     background: #1b291f;
 }
 
-/* Close takes the ember tint the window's own close button has. */
+/* Close is the window's own close button in miniature: the glyph and nothing
+   else, faint until the pointer is on it. */
 QTabBar::close-button {
     subcontrol-position: right;
-    border-radius: 6px;
+    image: url(${DATA}/naiture/tab-close-rest.svg);
     margin: 2px 4px 2px 10px;
-    padding: 1px;
 }
 
-QTabBar::close-button:hover {
-    background: rgba(242, 113, 106, 0.24);
-}
-
+QTabBar::close-button:hover,
 QTabBar::close-button:pressed {
-    background: rgba(242, 113, 106, 0.38);
+    image: url(${DATA}/naiture/tab-close-hot.svg);
 }
 
 /* The + at the end of the strip, and the arrows that appear once there are
@@ -139,6 +167,29 @@ install_runtime() {
     install -Dm644 "$REPO/tools/$t" "$DATA/naiture/tools/$t"
   done
   echo "  helper  -> $DATA/naiture/bin/naiture-view"
+}
+
+# The tab's close glyph, at rest and under the pointer. A style sheet can set a
+# subcontrol's image but not its opacity, and Breeze's own close icon comes in
+# at full strength — so the two states are shipped as two files. This is the
+# window's own close button: nothing but the glyph, faint until you are on it,
+# and then the ember the decoration uses.
+install_close_glyphs() {
+  # Qt's SVG renderer is SVG Tiny: it does not parse rgba() in a stroke, and a
+  # glyph written that way renders as nothing at all. Opacity is its own
+  # attribute here for that reason.
+  local f colour alpha
+  for f in rest hot; do
+    if [[ "$f" == hot ]]; then colour="#f2716a"; alpha="1"
+    else                       colour="#f2f7f2"; alpha="0.42"; fi
+    install -Dm644 /dev/stdin "$DATA/naiture/tab-close-$f.svg" <<SVG
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+  <path d="M4.6 4.6 L11.4 11.4 M11.4 4.6 L4.6 11.4"
+        stroke="$colour" stroke-opacity="$alpha" stroke-width="1.6"
+        stroke-linecap="round" fill="none"/>
+</svg>
+SVG
+  done
 }
 
 # One transparent icon, so a tab carries no picture. Konsole takes a tab's icon
@@ -248,6 +299,7 @@ esac
 install -d "$DATA/konsole"
 install_runtime
 install_blank_icon
+install_close_glyphs
 write_tabbar_css
 install_views
 dress_base_profiles

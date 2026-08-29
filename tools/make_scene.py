@@ -42,10 +42,16 @@ import make_wallpaper as w  # noqa: E402
 DESIGN_W, DESIGN_H = 1600, 1000
 
 # How far the sky is taken down from the desktop's. The wallpaper is looked at;
-# a scene is looked *through*, with text on top, so it lives about a third of
-# the way darker and keeps its brightest point below where text stops being
-# comfortable.
-DIM = 0.62
+# a scene is looked *through*, with text on top, so it lives well darker and
+# keeps its brightest point below where text stops being comfortable.
+DIM = 0.52
+
+# And then a ceiling, because everything above is random and a roll of the dice
+# should not be able to produce a scene you cannot read on. CEILING is the
+# brightest a scene's 99th-percentile pixel may be, out of 255; anything above
+# it is scaled down bodily. Tuning the ranges makes most scenes dark. This makes
+# all of them dark.
+CEILING = 74
 
 
 def dimmed(stops, dim, hue_shift, lift):
@@ -88,12 +94,12 @@ def render(index, width=800, height=500):
     sun_x = rng.uniform(-0.30, 1.05)
     sun_y = rng.uniform(-0.42, 0.18)
     sun_hue = rng.uniform(74, 108)          # gold, give or take a season
-    sun_strength = rng.uniform(0.26, 0.52)
+    sun_strength = rng.uniform(0.18, 0.36)
 
     # The sky follows the sun: low sun, warmer and lower ramp.
     sky = w.sky(width, height,
-                stops=dimmed(w.SKY_STOPS, DIM * rng.uniform(0.88, 1.12),
-                             rng.uniform(-14, 12), rng.uniform(-0.01, 0.03)),
+                stops=dimmed(w.SKY_STOPS, DIM * rng.uniform(0.84, 1.0),
+                             rng.uniform(-14, 12), rng.uniform(-0.02, 0.01)),
                 angle=w.SKY_ANGLE + rng.uniform(-5, 5))
     img = sky
 
@@ -117,7 +123,7 @@ def render(index, width=800, height=500):
     moss_h = int(rng.uniform(0.55, 0.90) * height)
     w.paste_glow(img, (rng.uniform(0.52, 0.66), rng.uniform(0.10, 0.15),
                        rng.uniform(138, 162)),
-                 rng.uniform(0.34, 0.52),
+                 rng.uniform(0.24, 0.38),
                  (int(moss_side * width - moss_w / 2), height - moss_h + int(0.12 * height),
                   moss_w, moss_h),
                  rng.uniform(0.58, 0.70), 80 * sy)
@@ -126,7 +132,7 @@ def render(index, width=800, height=500):
     if rng.random() < 0.75:
         band = int(rng.uniform(0.10, 0.22) * height)
         w.paste_glow(img, (0.86, 0.02, rng.uniform(150, 175)),
-                     rng.uniform(0.18, 0.34),
+                     rng.uniform(0.12, 0.24),
                      (int(-0.06 * width), horizon - band // 2,
                       int(1.12 * width), band),
                      0.72, 34 * sy)
@@ -139,7 +145,21 @@ def render(index, width=800, height=500):
 
     # And then the whole thing is put out of focus, which is what makes it
     # possible to read text on top of it.
-    return img.filter(ImageFilter.GaussianBlur(max(width / 190, 2.0)))
+    img = img.filter(ImageFilter.GaussianBlur(max(width / 190, 2.0)))
+
+    # The ceiling. Measured on the 99th percentile rather than the brightest
+    # pixel, so one stray highlight cannot drag a whole scene dark.
+    hist = img.convert("L").histogram()
+    total = sum(hist)
+    run, p99 = 0, 255
+    for value, count in enumerate(hist):
+        run += count
+        if run >= total * 0.99:
+            p99 = value
+            break
+    if p99 > CEILING:
+        img = img.point(lambda v, k=CEILING / p99: int(v * k))
+    return img
 
 
 def main():

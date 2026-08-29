@@ -138,12 +138,17 @@ for dir in "$DATA/plasma/plasmoids/org.naiture.dock/contents/icons" \
 done
 python3 "$REPO/tools/make_logo_svg.py" -a "$HEX" "${MARKS[@]}" | sed 's/^/  /'
 
+# The console's tab bar is a Qt style sheet, which cannot ask the colour scheme
+# for anything, so its copy of the accent is written into the file. Redraw it
+# here or it keeps the colour it was installed with.
 kwriteconfig6 --notify --file kdeglobals --group General --key AccentColor "$RGB"
 kwriteconfig6 --notify --file kdeglobals --group General --key LastUsedCustomAccentColor "$RGB"
 
 # Plasma only honours a custom accent while it is not taking one from the
 # wallpaper.
 kwriteconfig6 --notify --file kdeglobals --group General --key accentColorFromWallpaper false
+
+bash "$REPO/scripts/console.sh" --tabbar >/dev/null 2>&1 || true
 
 plasma-apply-colorscheme Naiture  >/dev/null 2>&1 || true
 plasma-apply-desktoptheme naiture >/dev/null 2>&1 || true
