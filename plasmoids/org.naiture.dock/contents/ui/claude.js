@@ -34,9 +34,13 @@ function detached(cmd) {
     return "systemd-run --user --quiet --collect -- " + cmd;
 }
 
+// naiture-view is what gives the session its view out of the window; it sets
+// the session's own profile and then exec's what follows. It has to be named
+// here because -e replaces the profile's Command outright, and scripts/
+// console.sh puts a copy of it on PATH for exactly this line.
 function terminal(workdir, args, profile) {
     let cmd = "konsole --desktopfile naiture-claude --profile " + shellQuote(profile)
-        + " --workdir " + shellQuote(workdir) + " -e";
+        + " --workdir " + shellQuote(workdir) + " -e naiture-view";
     for (const a of args) {
         cmd += " " + shellQuote(a);
     }

@@ -153,8 +153,16 @@ for g in org.kde.kdecoration3 org.kde.kdecoration2; do
   kwriteconfig6 --file kwinrc --group "$g" --key BorderSizeAuto false
   # No app icon. Minimise and maximise are present but only surface when the
   # pointer nears them; the close X stays faintly visible. Letters are
-  # KDecoration button codes: M enu, I minimise, A maximise, X close.
-  kwriteconfig6 --file kwinrc --group "$g" --key ButtonsOnLeft ""
+  # KDecoration button codes: M enu, N application menu, I minimise,
+  # A maximise, X close.
+  #
+  # N is where a naiture window's menu lives. The design wants one band at the
+  # top of a window and nothing else, so an application that would otherwise
+  # spend a whole row on a toolbar just to hold a hamburger — Konsole does —
+  # puts it on the titlebar instead, on the same line as the window's own
+  # buttons. It only draws for windows that export a menu; the rest simply do
+  # not show it.
+  kwriteconfig6 --file kwinrc --group "$g" --key ButtonsOnLeft "N"
   kwriteconfig6 --file kwinrc --group "$g" --key ButtonsOnRight "IAX"
 done
 

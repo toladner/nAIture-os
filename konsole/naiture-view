@@ -1,0 +1,105 @@
+#!/usr/bin/env bash
+# Hand this terminal session the view out of its own window, then get out of
+# the way.
+#
+# This runs as the session's command — Konsole starts it, it does its work in a
+# few milliseconds and exec's whatever was actually asked for, so it is gone
+# before the shell draws its first prompt. Running from *inside* the session is
+# what makes it work for every tab however it was opened: Konsole puts
+# KONSOLE_DBUS_SERVICE and KONSOLE_DBUS_SESSION into every session's
+# environment, so a session can name itself and change its own profile. Konsole
+# emits no signal when a tab is created, so the alternative would be a daemon
+# polling for new sessions, one per window, for ever.
+#
+# A view is a profile, because Session.setProfile is the only lever Konsole
+# offers — there is no way to set a colour scheme, and the scheme is what
+# carries the wallpaper. So the theme ships VIEWS profiles that differ in
+# nothing but their scheme, and this picks one.
+#
+# Which one is decided by the directory, so a project keeps its own window on
+# the world across reboots. The picture behind it is not stored anywhere: it is
+# rendered on demand into XDG_RUNTIME_DIR, which is tmpfs and is emptied at
+# logout, and comes back identical next time because tools/make_scene.py is
+# seeded by the view's number. Nothing accumulates, and nothing is ever
+# fetched.
+#
+# Two tabs that hash to the same view would look the same side by side, which
+# is the one thing the design is trying to avoid, so a session that finds its
+# view already taken in the same window steps along to the next free one.
+set -u
+
+HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+VIEWS=12
+
+# The renderer, wherever this copy of the helper can see it: beside it under
+# the theme's own directory, or in the theme's directory outright, since a
+# second copy of this script lives on PATH so that `konsole -e naiture-view`
+# resolves.
+TOOLS=""
+for candidate in "${HERE%/bin}/tools" \
+                 "${XDG_DATA_HOME:-$HOME/.local/share}/naiture/tools"; do
+  [[ -f "$candidate/make_scene.py" ]] && { TOOLS="$candidate"; break; }
+done
+SCENES="${XDG_RUNTIME_DIR:-/tmp}/naiture/scenes"
+
+# The view this directory belongs to. cut -c1-7 keeps the value inside a
+# signed 32-bit int on any shell, which 8 hex digits would not.
+view_for() {
+  local h
+  h="$(printf %s "$1" | md5sum | cut -c1-7)"
+  echo $(( 0x$h % VIEWS ))
+}
+
+konsole_call() { # konsole_call <object> <method> [args...]
+  [[ -n "${KONSOLE_DBUS_SERVICE:-}" ]] || return 1
+  command -v qdbus-qt6 >/dev/null 2>&1 || return 1
+  local obj="$1"; shift
+  qdbus-qt6 "$KONSOLE_DBUS_SERVICE" "$obj" "$@" 2>/dev/null
+}
+
+# Views already on screen in this window, so we can avoid landing on one twice.
+taken() {
+  local ids id p
+  ids="$(konsole_call "${KONSOLE_DBUS_WINDOW:-/Windows/1}" \
+         org.kde.konsole.Window.sessionList)" || return 0
+  for id in $ids; do
+    [[ "/Sessions/$id" == "${KONSOLE_DBUS_SESSION:-}" ]] && continue
+    p="$(konsole_call "/Sessions/$id" org.kde.konsole.Session.profile)"
+    [[ "$p" == naiture-view-* ]] && echo "${p##*-}"
+  done
+}
+
+pick() {
+  local want busy n i
+  want="$(view_for "$PWD")"
+  busy=" $(taken | tr '\n' ' ') "
+  for i in $(seq 0 $((VIEWS - 1))); do
+    n="$(printf %02d $(( (want + i) % VIEWS )))"
+    [[ "$busy" == *" $n "* ]] || { echo "$n"; return; }
+  done
+  printf %02d "$want"
+}
+
+# Draw the view if this is the first tab in this login to ask for it. 50ms, and
+# only ever once per view — every later tab finds the file already there.
+ensure_scene() {
+  local n="$1"
+  local out="$SCENES/$n.jpg"
+  [[ -s "$out" ]] && return 0
+  [[ -n "$TOOLS" ]] && command -v python3 >/dev/null 2>&1 || return 1
+  mkdir -p "$SCENES"
+  python3 "$TOOLS/make_scene.py" -i "$((10#$n))" -o "$out" \
+    -W 480 -H 300 >/dev/null 2>&1
+}
+
+VIEW="$(pick)"
+ensure_scene "$VIEW" && \
+  konsole_call "${KONSOLE_DBUS_SESSION:-/Sessions/1}" \
+               org.kde.konsole.Session.setProfile "naiture-view-$VIEW" >/dev/null
+
+# Whatever this session was actually for.
+if [[ $# -gt 0 ]]; then
+  exec "$@"
+else
+  exec "${SHELL:-/bin/bash}" -l
+fi

@@ -263,6 +263,7 @@ apply() {
   bash "$REPO/scripts/window-decoration.sh"
   bash "$REPO/scripts/widget-style.sh"
   bash "$REPO/scripts/dock-proximity.sh"
+  bash "$REPO/scripts/console.sh"
   bash "$REPO/scripts/claude-console.sh"
 
   if command -v qdbus-qt6 >/dev/null 2>&1; then
