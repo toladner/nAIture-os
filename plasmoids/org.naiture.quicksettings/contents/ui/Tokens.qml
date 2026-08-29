@@ -45,10 +45,6 @@ QtObject {
     readonly property int sliderValueWidth: 30
     readonly property color track: Qt.rgba(1, 1, 1, 0.11)
 
-    // The design sets the time and every number in JetBrains Mono so the digits
-    // do not shuffle as they change.
-    readonly property string monoFamily: "JetBrains Mono"
-
     // The Konsole profile's size, so the pill's clock matches the terminal it
     // sits under rather than the design's smaller 13px.
     readonly property real terminalPointSize: 11

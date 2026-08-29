@@ -11,6 +11,15 @@
  * Folded into the clock, that bar would span the strip too; kept apart, it sits
  * over the time alone.
  *
+ * Two things a panel applet has to get right, and both are silent when wrong:
+ *
+ *   - The size hints belong on the PlasmoidItem itself, not on the
+ *     representation. Put them on the representation and the panel reserves its
+ *     own default width — about 40px here — and draws nothing in it.
+ *   - An applet with no popup shows its `fullRepresentation` inline. Asking for
+ *     `compactRepresentation` gives the collapsed form of a popup that does not
+ *     exist. Plasma's own panel spacer is the model for both.
+ *
  * KWin keeps the state on /KWin as `showingDesktop` and toggles it with
  * showDesktop(bool) — the same call Plasma's own Show Desktop widget makes.
  */
@@ -26,10 +35,21 @@ PlasmoidItem {
     id: root
 
     // Just wide enough to be hit at the screen corner without being a button.
-    readonly property int stripWidth: 6
+    readonly property int stripWidth: 8
 
-    Plasmoid.status: PlasmaCore.Types.PassiveStatus
-    preferredRepresentation: compactRepresentation
+    readonly property bool horizontal: Plasmoid.formFactor !== PlasmaCore.Types.Vertical
+
+    Layout.minimumWidth: horizontal ? stripWidth : 1
+    Layout.preferredWidth: horizontal ? stripWidth : 0
+    Layout.maximumWidth: horizontal ? stripWidth : Infinity
+    Layout.minimumHeight: horizontal ? 1 : stripWidth
+    Layout.preferredHeight: horizontal ? 0 : stripWidth
+    Layout.maximumHeight: horizontal ? Infinity : stripWidth
+    Layout.fillWidth: !horizontal
+    Layout.fillHeight: horizontal
+
+    preferredRepresentation: fullRepresentation
+
     toolTipMainText: i18n("Show desktop")
     toolTipSubText: i18n("Click to peek at the desktop, and again to come back")
 
@@ -54,11 +74,7 @@ PlasmoidItem {
         });
     }
 
-    compactRepresentation: Item {
-        Layout.minimumWidth: root.stripWidth
-        Layout.preferredWidth: root.stripWidth
-        Layout.fillHeight: true
-
+    fullRepresentation: Item {
         HoverHandler {
             id: hover
             cursorShape: Qt.PointingHandCursor
@@ -71,13 +87,12 @@ PlasmoidItem {
         // The only mark it makes: a hairline that comes up under the pointer,
         // and stays up while the desktop is showing.
         Rectangle {
-            anchors.left: parent.left
-            anchors.verticalCenter: parent.verticalCenter
-            width: 1
-            height: Math.round(parent.height * 0.55)
+            anchors.centerIn: parent
+            width: root.horizontal ? 1 : Math.round(parent.width * 0.55)
+            height: root.horizontal ? Math.round(parent.height * 0.55) : 1
             radius: 0.5
             color: root.showing ? Kirigami.Theme.highlightColor : "#f2f7f2"
-            opacity: hover.hovered || root.showing ? 0.45 : 0.12
+            opacity: hover.hovered || root.showing ? 0.6 : 0.18
 
             Behavior on opacity {
                 NumberAnimation { duration: 150 }

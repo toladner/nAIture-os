@@ -195,15 +195,24 @@ through the same APIs Plasma's own applets use. It exists because Plasma's
 system tray always shows an expander chevron beside the clock when anything is
 hidden, and its popup is Plasma's list rather than the design's sheet.
 
-It draws its own background (`Plasmoid.backgroundHints: NoBackground` plus a
-rounded Rectangle): the theme's `dialogs/background.svg` is painted by
-`PlasmaExtras.Representation`, which a plain `Item` root is not, so a popup that
-does not use Plasma's scaffolding gets no themed frame.
+Its popup takes the design's width and padding but not its 20px radius. On
+Plasma 6.7 the popup **window** paints its own background: the theme's
+`dialogs/background.svg` is not consulted for an applet popup (replacing that
+file with a solid magenta proves it), and
+`Plasmoid.backgroundHints: NoBackground` does not stop it either. Drawing a
+rounded rectangle inside only puts fake corners in a square box, which is what
+it looked like. The shape, the shadow and the base colour come from the popup
+and the colour scheme.
 
 `plasmoids/org.naiture.showdesktop` is the sliver at the screen's corner that
 peeks at the desktop. It is a separate applet on purpose: Plasma draws its
 "this applet's popup is open" accent bar across the whole applet, so folding the
 sliver into the clock would stretch that bar past the time.
+
+A panel applet's **size hints belong on the `PlasmoidItem`, not on the
+representation**, and an applet with no popup shows its `fullRepresentation`
+inline. Get either wrong and the panel silently reserves its own default width —
+about 40px — and draws nothing in it. Plasma's own panel spacer is the model.
 
 ## Things that will trip you up
 

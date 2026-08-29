@@ -14,15 +14,12 @@
  *   Wi-Fi        org.kde.plasma.networkmanagement — Handler.enableWireless
  *   Bluetooth    org.kde.bluezqt — Manager.usableAdapter.powered
  *   Sound        org.kde.plasma.private.volume — PreferredDevice.sink
- *   Do not disturb  org.kde.notificationmanager — Settings.notificationsInhibitedUntil
- *   Aeroplane    org.kde.plasma.networkmanagement — Handler.enableAirplaneMode
  *   Night light  org.kde.plasma.private.brightnesscontrolplugin — NightLightInhibitor
  *   Brightness   ...brightnesscontrolplugin — ScreenBrightnessControl
  *
- * Two of the design's six tiles have no counterpart on a real desktop: "Local
- * models · 3 warm" and "Field light · Follows sun". Rather than ship two tiles
- * that do nothing, this takes the nearest real controls — aeroplane mode and
- * night light — and keeps the design's glyphs and layout.
+ * The design lays out six tiles. Two of them — "Local models · 3 warm" and
+ * "Do not disturb" — are gone by request, and "Field light · Follows sun"
+ * became night light, which is the real control it describes.
  */
 import QtQml
 import QtQuick
@@ -33,12 +30,12 @@ import org.kde.plasma.core as PlasmaCore
 import org.kde.plasma.components as PC3
 import org.kde.kirigami as Kirigami
 import org.kde.plasma.workspace.dbus as DBus
+import org.kde.kcmutils as KCMUtils
 
 import org.kde.plasma.private.volume as Volume
 import org.kde.plasma.private.brightnesscontrolplugin as BrightnessControl
 import org.kde.plasma.networkmanagement as PlasmaNM
 import org.kde.bluezqt as BluezQt
-import org.kde.notificationmanager as Notifications
 
 PlasmoidItem {
     id: root
@@ -49,11 +46,6 @@ PlasmoidItem {
     readonly property color accent: Kirigami.Theme.highlightColor
 
     Plasmoid.status: PlasmaCore.Types.ActiveStatus
-
-    // The sheet is drawn below, so Plasma must not draw one behind it: with a
-    // background of its own the popup window would show square corners around
-    // the design's rounded ones.
-    Plasmoid.backgroundHints: PlasmaCore.Types.NoBackground
     preferredRepresentation: compactRepresentation
     toolTipMainText: Qt.formatDate(clock.now, Locale.LongFormat)
     toolTipSubText: i18n("Quick settings")
@@ -106,10 +98,6 @@ PlasmoidItem {
         id: screenBrightness
         // Poll only while the sheet is open.
         isSilent: !root.expanded
-    }
-
-    Notifications.Settings {
-        id: notificationSettings
     }
 
     // The display list is a bare QAbstractListModel whose roleNames() is not
@@ -173,34 +161,9 @@ PlasmoidItem {
     readonly property int bluetoothConnected: BluezQt.Manager.connectedDevices ? BluezQt.Manager.connectedDevices.length : 0
 
     readonly property bool wifiOn: enabledConnections.wirelessEnabled
-    readonly property bool dndOn: Notifications.Server.inhibited
     readonly property bool nightLightOn: !BrightnessControl.NightLightInhibitor.inhibited
 
-    function dndDetail() {
-        if (!dndOn) {
-            return i18n("Notifications on");
-        }
-        const until = notificationSettings.notificationsInhibitedUntil;
-        const ms = until ? until.getTime() : NaN;
-        // A year out is the "until I turn it off" case the applet writes.
-        if (!isNaN(ms) && ms > Date.now() && ms - Date.now() < 100 * 24 * 60 * 60 * 1000) {
-            return i18nc("do not disturb until a time", "Until %1", Qt.formatTime(until, "HH:mm"));
-        }
-        return i18n("Until turned off");
-    }
 
-    function toggleDnd() {
-        if (dndOn) {
-            notificationSettings.notificationsInhibitedUntil = new Date(0);
-            notificationSettings.save();
-            Notifications.Server.inhibited = false;
-        } else {
-            const until = new Date();
-            until.setFullYear(until.getFullYear() + 1);
-            notificationSettings.notificationsInhibitedUntil = until;
-            notificationSettings.save();
-        }
-    }
 
     // --- the pill -------------------------------------------------------
 
@@ -218,10 +181,12 @@ PlasmoidItem {
             id: timeLabel
             anchors.centerIn: parent
             text: root.timeText
-            font.family: Tokens.monoFamily
             // The terminal's size, so the two read as one typeface at one size.
             // It still fits: the island's 42px leaves 28px of content height.
             font.pointSize: Tokens.terminalPointSize
+            // Proportional digits would change the pill's width as the time
+            // ticks, and the island is sized to its content.
+            font.features: ({ "tnum": 1 })
             font.weight: Font.Medium
             color: Tokens.text
         }
@@ -237,22 +202,19 @@ PlasmoidItem {
 
     // --- the sheet ------------------------------------------------------
 
-    fullRepresentation: Rectangle {
+    // The design's sheet is a 20px-rounded, 85%-opaque panel. Plasma 6.7 paints
+    // the popup window itself — the theme's dialogs/background.svg is not used
+    // for applet popups, and backgroundHints: NoBackground does not stop it —
+    // so a rounded rectangle drawn in here only sits fake corners inside a
+    // square box. What is left to us is the design's width and padding; the
+    // shape, the shadow and the colour come from the popup and the scheme.
+    fullRepresentation: Item {
         id: sheet
 
-        // design/naiture-canvas.dc.html:
-        //   width: 400; padding: 20px 22px; border-radius: 20px;
-        //   background: rgba(13,24,17,0.85);
-        //   border: 1px solid rgba(255,255,255,0.16);
         Layout.minimumWidth: Tokens.sheetWidth
         Layout.maximumWidth: Tokens.sheetWidth
         Layout.minimumHeight: content.implicitHeight + Tokens.sheetPadY * 2
         Layout.maximumHeight: Layout.minimumHeight
-
-        radius: Tokens.sheetRadius
-        color: Tokens.sheet
-        border.width: 1
-        border.color: Tokens.sheetBorder
 
         ColumnLayout {
             id: content
@@ -304,8 +266,8 @@ PlasmoidItem {
 
                 PC3.Label {
                     text: root.timeText
-                    font.family: Tokens.monoFamily
                     font.pointSize: Tokens.pt(18)
+                    font.features: ({ "tnum": 1 })
                     font.weight: Font.Medium
                     color: Tokens.text
                 }
@@ -358,25 +320,7 @@ PlasmoidItem {
                     onToggled: root.sink.muted = !root.sink.muted
                 }
 
-                QuickTile {
-                    Layout.fillWidth: true
-                    accent: root.accent
-                    glyph: "◐"
-                    name: i18n("Do not disturb")
-                    on: root.dndOn
-                    detail: root.dndDetail()
-                    onToggled: root.toggleDnd()
-                }
 
-                QuickTile {
-                    Layout.fillWidth: true
-                    accent: root.accent
-                    glyph: "⬡"
-                    name: i18n("Aeroplane mode")
-                    on: PlasmaNM.Configuration.airplaneModeEnabled
-                    detail: on ? i18n("Radios off") : i18n("Radios on")
-                    onToggled: networkHandler.enableAirplaneMode(!PlasmaNM.Configuration.airplaneModeEnabled)
-                }
 
                 QuickTile {
                     Layout.fillWidth: true
@@ -412,6 +356,38 @@ PlasmoidItem {
                     available: screenBrightness.isBrightnessAvailable
                     value: root.brightnessRatio
                     onMoved: ratio => root.setBrightness(ratio)
+                }
+            }
+
+            // The sheet covers the handful of things worth a click; everything
+            // else lives one step further in.
+            Kirigami.Icon {
+                Layout.alignment: Qt.AlignRight
+                Layout.preferredWidth: Kirigami.Units.iconSizes.small
+                Layout.preferredHeight: Kirigami.Units.iconSizes.small
+
+                source: "applications-system-symbolic"
+                opacity: settingsHover.hovered ? 1 : 0.45
+
+                Behavior on opacity {
+                    NumberAnimation { duration: 150 }
+                }
+
+                HoverHandler {
+                    id: settingsHover
+                    cursorShape: Qt.PointingHandCursor
+                }
+
+                TapHandler {
+                    onTapped: {
+                        root.expanded = false;
+                        KCMUtils.KCMLauncher.openSystemSettings();
+                    }
+                }
+
+                PlasmaCore.ToolTipArea {
+                    anchors.fill: parent
+                    mainText: i18n("All settings")
                 }
             }
         }
