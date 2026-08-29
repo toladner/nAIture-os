@@ -43,39 +43,87 @@ write_tabbar_css() {
   install -d "$DATA/naiture"
   cat > "$DATA/naiture/konsole-tabbar.css" <<'CSS'
 /* Written by scripts/console.sh — edit that, not this. */
+
+/* The strip itself is the window's own surface, so the band at the top of a
+   console reads as one piece with the titlebar above it rather than as a
+   widget sitting on top of the terminal. */
 QTabBar {
     background: #0d1410;
     border: 0;
+    padding: 0 4px;
     qproperty-drawBase: 0;
 }
 
+/* A tab is a shape only when it is the one you are looking at. The rest are
+   text on the band — no outlines, no separators, nothing to count. */
 QTabBar::tab {
     background: transparent;
-    color: rgba(242, 247, 242, 0.5);
-    border: 0;
+    color: rgba(242, 247, 242, 0.72);
+    border: 1px solid transparent;
     border-radius: 9px;
-    padding: 5px 12px;
-    margin: 4px 2px;
-    min-width: 8em;
-    max-width: 18em;
+    padding: 8px 6px 8px 14px;
+    margin: 5px 3px;
+    min-width: 11em;
+    max-width: 20em;
 }
 
 QTabBar::tab:hover {
     background: rgba(240, 248, 240, 0.06);
-    color: rgba(242, 247, 242, 0.78);
-}
-
-QTabBar::tab:selected {
-    background: #16211a;
     color: #f2f7f2;
 }
 
-QTabBar::close-button {
-    margin: 1px;
+QTabBar::tab:selected {
+    background: #18241c;
+    border: 1px solid rgba(240, 248, 240, 0.07);
+    color: #f2f7f2;
 }
 
+QTabBar::tab:selected:hover {
+    background: #1b291f;
+}
+
+/* Close takes the ember tint the window's own close button has. */
+QTabBar::close-button {
+    subcontrol-position: right;
+    border-radius: 6px;
+    margin: 2px 4px 2px 10px;
+    padding: 1px;
+}
+
+QTabBar::close-button:hover {
+    background: rgba(242, 113, 106, 0.24);
+}
+
+QTabBar::close-button:pressed {
+    background: rgba(242, 113, 106, 0.38);
+}
+
+/* The + at the end of the strip, and the arrows that appear once there are
+   more tabs than room. Qt draws all three as tool buttons and they come out
+   as raised boxes unless they are told otherwise. */
+QTabBar QToolButton,
+QTabWidget QToolButton {
+    background: transparent;
+    border: 0;
+    border-radius: 8px;
+    margin: 5px 2px;
+    padding: 2px 5px;
+}
+
+QTabBar QToolButton:hover,
+QTabWidget QToolButton:hover {
+    background: rgba(240, 248, 240, 0.08);
+}
+
+QTabBar QToolButton:pressed,
+QTabWidget QToolButton:pressed {
+    background: rgba(240, 248, 240, 0.13);
+}
+
+/* No line between the strip and the terminal under it. */
 QTabWidget::pane {
     border: 0;
+    background: transparent;
 }
 CSS
   echo "  tab bar -> $DATA/naiture/konsole-tabbar.css"
