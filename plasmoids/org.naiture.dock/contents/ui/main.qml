@@ -35,6 +35,7 @@ import org.kde.kirigami as Kirigami
 import org.kde.plasma.components as PC3
 import org.kde.taskmanager as TaskManager
 import org.kde.pipewire as PipeWire
+import org.kde.plasma.workspace.dbus as DBus
 
 PlasmoidItem {
     id: root
@@ -145,6 +146,21 @@ PlasmoidItem {
 
     function indexAt(row: int): var {
         return tasksModel.makeModelIndex(row);
+    }
+
+    // Hovering a thumbnail brings its window forward on the desktop, the way
+    // Windows peeks at one. KWin's HighlightWindow effect is what does it, and
+    // it is the same call Plasma's own task manager makes for its tooltips —
+    // pass the windows to raise, or an empty list to let go.
+    function highlightWindows(ids: var): void {
+        DBus.SessionBus.asyncCall({
+            service: "org.kde.KWin.HighlightWindow",
+            path: "/org/kde/KWin/HighlightWindow",
+            iface: "org.kde.KWin.HighlightWindow",
+            member: "highlightWindows",
+            arguments: [ids],
+            signature: "(as)"
+        });
     }
 
     fullRepresentation: Item {
@@ -341,6 +357,7 @@ PlasmoidItem {
             onTriggered: {
                 preview.visible = false;
                 dock.previewTile = null;
+                root.highlightWindows([]);
             }
         }
 
@@ -443,18 +460,10 @@ PlasmoidItem {
                                     width: preview.shotWidth
                                     height: preview.shotHeight
                                     radius: 6
-                                    color: shotPointer.hovered
-                                        ? Qt.rgba(root.accent.r, root.accent.g, root.accent.b, 0.22)
-                                        : Qt.rgba(1, 1, 1, 0.05)
+                                    color: Qt.rgba(1, 1, 1, 0.05)
                                     border.width: 1
-                                    border.color: shotPointer.hovered
-                                        ? Qt.rgba(root.accent.r, root.accent.g, root.accent.b, 0.55)
-                                        : Qt.rgba(1, 1, 1, 0.09)
+                                    border.color: Qt.rgba(1, 1, 1, 0.09)
                                     clip: true
-
-                                    Behavior on color {
-                                        ColorAnimation { duration: 120 }
-                                    }
 
                                     PipeWire.PipeWireSourceItem {
                                         anchors.fill: parent
@@ -469,9 +478,31 @@ PlasmoidItem {
                                         }
                                     }
 
+                                    // The same bar the dock puts over the
+                                    // active window, so "this one" is said the
+                                    // same way in both places.
+                                    Rectangle {
+                                        anchors.top: parent.top
+                                        anchors.left: parent.left
+                                        anchors.right: parent.right
+                                        anchors.margins: 1
+                                        height: root.markerThickness
+                                        radius: height / 2
+                                        color: root.accent
+                                        opacity: shotPointer.hovered ? 1 : 0
+
+                                        Behavior on opacity {
+                                            NumberAnimation { duration: 150 }
+                                        }
+                                    }
+
                                     HoverHandler {
                                         id: shotPointer
+
                                         cursorShape: Qt.PointingHandCursor
+
+                                        onHoveredChanged: root.highlightWindows(
+                                            hovered ? [shot.modelData] : [])
                                     }
 
                                     TapHandler {
@@ -488,6 +519,7 @@ PlasmoidItem {
                                             dock.hideDelay.stop();
                                             preview.visible = false;
                                             dock.previewTile = null;
+                                            root.highlightWindows([]);
                                         }
                                     }
                                 }

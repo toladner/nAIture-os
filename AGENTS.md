@@ -257,6 +257,13 @@ one raises that window: a group's windows are *children* of its row, so it is
 `makeModelIndex(row, child)` for one of several and `makeModelIndex(row)` for a
 lone window.
 
+Hovering a thumbnail brings that window forward on the desktop — Windows' peek
+— through KWin's HighlightWindow effect, the same call Plasma's own task
+manager makes for its tooltips: `highlightWindows` on
+`/org/kde/KWin/HighlightWindow` with the windows to raise, or an empty list to
+let go. Every path that closes the preview has to let go, or the desktop stays
+dimmed around a window nobody is pointing at.
+
 The preview lags the pointer on the way out — a short hide timer that the
 preview's own hover cancels — because a thumbnail you cannot walk onto cannot be
 clicked. Its size is worked out on the applet rather than from the card inside
