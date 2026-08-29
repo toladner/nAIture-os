@@ -53,6 +53,29 @@ rm -f  "$DATA/konsole/Claude.profile"
 rm -rf "$DATA/wallpapers/naiture"
 rm -f  "$DATA/konsole/Naiture.colorscheme" "$DATA/konsole/Naiture.profile"
 
+# The console window: the views, the helper that chooses between them, the tab
+# bar's stylesheet, and the pictures — which only ever lived in tmpfs.
+rm -f  "$DATA"/konsole/NaitureView[0-9][0-9].colorscheme
+rm -f  "$DATA"/konsole/naiture-view-[0-9][0-9].profile
+rm -f  "$DATA/icons/hicolor/scalable/apps/naiture-blank.svg"
+rm -f  "$HOME/.local/bin/naiture-view"
+rm -rf "$DATA/naiture"
+rm -rf "${XDG_RUNTIME_DIR:-/tmp}/naiture/scenes"
+
+# konsolerc keeps the tab bar and the hidden toolbars; the backup restore above
+# only covers the file when there was one to begin with.
+for key in TabBarVisibility TabBarPosition ExpandTabWidth NewTabButton \
+           SearchTabsButton CloseTabButton CloseTabOnMiddleMouseButton \
+           TabBarUseUserStyleSheet TabBarUserStyleSheetFile; do
+  kwriteconfig6 --file konsolerc --group TabBar --key "$key" --delete 2>/dev/null || true
+done
+for tb in mainToolBar sessionToolbar; do
+  kwriteconfig6 --file konsolerc --group MainWindow --group "Toolbar $tb" \
+    --key Hidden --delete 2>/dev/null || true
+  kwriteconfig6 --file konsolerc --group "Toolbar $tb" \
+    --key Hidden --delete 2>/dev/null || true
+done
+
 if [[ $KEEP_FONTS -eq 0 ]]; then
   rm -rf "$DATA/fonts/naiture"
   fc-cache -f >/dev/null 2>&1 || true

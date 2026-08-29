@@ -157,6 +157,20 @@ kprofile="$(kreadconfig6 --file konsolerc --group "Desktop Entry" --key DefaultP
   && record konsole ok "Naiture.profile" \
   || record konsole warn "default profile is '${kprofile:-unset}'"
 
+# --- the console window: tabs at the top, and a view for each of them ---
+views="$(ls "$DATA"/konsole/naiture-view-[0-9][0-9].profile 2>/dev/null | wc -l)"
+tabcss="$(kreadconfig6 --file konsolerc --group TabBar \
+          --key TabBarUserStyleSheetFile 2>/dev/null)"
+if [[ "$views" -lt 1 ]]; then
+  record console fail "no view profiles — run scripts/console.sh"
+elif [[ ! -x "$DATA/naiture/bin/naiture-view" ]]; then
+  record console fail "the view helper is missing"
+elif [[ ! -f "$tabcss" ]]; then
+  record console warn "the tab bar stylesheet is not where konsolerc points"
+else
+  record console ok "$views views, tabs at the top"
+fi
+
 # --- assets on disk ---
 for path in "$DATA/plasma/plasmoids/org.naiture.dock/metadata.json" \
             "$DATA/plasma/plasmoids/org.naiture.quicksettings/metadata.json" \
