@@ -63,7 +63,12 @@ kw --group General --key ShowFullPath false
 # an "Actions" submenu once more than four apply — so whether you can see it
 # depends on what else the machine has installed. Ours is always top level.
 # Dolphin's is turned off so there is one entry rather than two.
-install -Dm644 "$REPO/dolphin/naiture-terminal.desktop" \
+# 755, not 644. KDesktopFile::isAuthorizedDesktopFile allows a desktop file
+# outside the applications directories only when it is owned by root or carries
+# the executable bit — the system's own service menus pass on the first, and
+# anything installed into a user's home has to pass on the second. Without it
+# the entry appears and clicking it says you are not authorized.
+install -Dm755 "$REPO/dolphin/naiture-terminal.desktop" \
                "$DATA/kio/servicemenus/naiture-terminal.desktop"
 kw --group ContextMenu --key ShowOpenTerminal false
 

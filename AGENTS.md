@@ -391,6 +391,44 @@ Verify without a screenshot: a running Konsole exports
 `org.kde.konsole.KXmlGuiWindow.isToolBarVisible` and
 `org.kde.konsole.Session.profile`.
 
+## The explorer's window
+
+`scripts/explorer.sh` builds it. Dolphin gives up the thing Konsole would not:
+**its toolbar is authorable.** A local `dolphinui.rc` replaces the
+application's when its `version` is at least as high, and a file carrying
+nothing but a `<ToolBar>` leaves every menu and action intact — they are built
+in code and only arranged by the document. So `dolphin/dolphinui.rc` is twelve
+lines of our own, and Dolphin's 140-line GPL file does not have to be vendored
+into an MIT repository. The version is pinned to what upstream ships today and
+cannot be read from the installed files (it is inside a compressed Qt
+resource): if Dolphin raises it, ours loses and the stock toolbar returns —
+nothing breaks, and `verify.sh` reports the version it finds.
+
+Dolphin has **no equivalent of Konsole's `TabBarUserStyleSheetFile`.** Nothing
+in it takes a style sheet, so the window's structure is ours while its surfaces
+stay Breeze drawing in the Naiture palette.
+
+**The tab bar cannot go above the toolbar.** Dolphin's tabs live inside the
+central widget and a toolbar lives in the main window's dock area, which is
+always above it. `TabStyle` offers `AutoSize`, `FullWidth` and `FixedSize` —
+widths, not positions.
+
+**A user's service menu must be executable.**
+`KDesktopFile::isAuthorizedDesktopFile` permits a desktop file outside the
+applications directories only when it is owned by root *or* has the executable
+bit; the system's own service menus pass on the first test, so 644 looks
+correct right up until a user copy is refused. The symptom is the entry
+appearing in the menu and saying "not authorized" when clicked.
+
+**Dolphin's own "Open Terminal Here" is gated three ways** and only the first is
+a setting: `ContextMenuSettings::showOpenTerminal()`, the item having to be a
+local directory (so never a file), and KIO folding the extra actions into an
+"Actions" submenu once more than four of them apply
+(`kfileitemactions.cpp`: `if (actionsMenuHolder->actions().size() > 4)`).
+Whether it is visible therefore depends on which service menus the machine
+happens to have. `dolphin/naiture-terminal.desktop` is ours instead, with
+`X-KDE-Priority=TopLevel`, and Dolphin's is turned off so there is one entry.
+
 ## Things that will trip you up
 
 **`sudo` may have no TTY.** In non-interactive shells `sudo` fails with "a
