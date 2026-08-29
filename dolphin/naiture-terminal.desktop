@@ -1,0 +1,22 @@
+# Right-click a folder (or a folder's empty space) and get a terminal on it.
+#
+# Dolphin has its own "Open Terminal Here", but it is gated three ways —
+# ContextMenuSettings::showOpenTerminal(), the item being a local directory, and
+# KIO folding the extras into an "Actions" submenu once more than four of them
+# apply — so whether it is visible depends on what else is installed on the
+# machine. This is ours: one entry, always top level, in our own words.
+#
+# It needs nothing to know about naiture. konsolerc's default profile is
+# Naiture.profile, whose Command is the view helper, so the terminal this opens
+# picks its own view exactly as a tab does.
+[Desktop Entry]
+Type=Service
+MimeType=inode/directory;
+Actions=naitureTerminal;
+X-KDE-Priority=TopLevel
+X-KDE-MaxNumberOfUrls=1
+
+[Desktop Action naitureTerminal]
+Name=Open Terminal Here
+Icon=utilities-terminal
+Exec=konsole --profile Naiture --workdir %f

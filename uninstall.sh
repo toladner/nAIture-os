@@ -66,6 +66,7 @@ rm -rf "${XDG_RUNTIME_DIR:-/tmp}/naiture/scenes"
 # The explorer: our toolbar, the global view properties, and the keys that
 # emptied the window of everything but its band.
 rm -f  "$DATA/kxmlgui5/dolphin/dolphinui.rc"
+rm -f  "$DATA/kio/servicemenus/naiture-terminal.desktop"
 rm -rf "$DATA/dolphin/view_properties/global"
 for key in ShowStatusBar ShowZoomSlider FilterBar ShowSelectionToggle \
            ShowToolTips AlwaysShowTabBar ShowCloseButtonOnTabs EditableUrl \

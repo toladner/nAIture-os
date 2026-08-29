@@ -57,11 +57,15 @@ kw --group General --key ShowCloseButtonOnTabs true
 kw --group General --key EditableUrl false
 kw --group General --key ShowFullPath false
 
-# Right-click anywhere and get a terminal on that directory. It comes up in the
-# naiture console without anything further being set: konsolerc's default
-# profile is Naiture.profile, whose Command is the view helper, so a terminal
-# opened from here picks its own view exactly as a tab does.
-kw --group ContextMenu --key ShowOpenTerminal true
+# Right-click a folder and get a terminal on it. This is our own service menu
+# rather than Dolphin's built-in entry, because Dolphin's is gated three ways —
+# the setting, the item being a local directory, and KIO folding the extras into
+# an "Actions" submenu once more than four apply — so whether you can see it
+# depends on what else the machine has installed. Ours is always top level.
+# Dolphin's is turned off so there is one entry rather than two.
+install -Dm644 "$REPO/dolphin/naiture-terminal.desktop" \
+               "$DATA/kio/servicemenus/naiture-terminal.desktop"
+kw --group ContextMenu --key ShowOpenTerminal false
 
 # How the folder is shown belongs to the folder, so it is on the right-click as
 # well as on the band — the band's button is the one you find, the context menu
