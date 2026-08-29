@@ -21,6 +21,17 @@
  * desktop, screen and activity, and every request below are the same code its
  * applet uses. What this file owns is only how a task looks and moves.
  *
+ * The mark is the row's first tile rather than a launcher applet of its own,
+ * and it has to be: the accent bar is one Rectangle that slides between tiles,
+ * and two applets are two coordinate spaces with a panel layout in between. As
+ * a tile it is marked, hovered and lifted by exactly the code the windows use.
+ * The design draws the same thing — start, rule and tasks are one container in
+ * design/naiture-canvas.dc.html, not three.
+ *
+ * X-Plasma-Provides: org.kde.plasma.launchermenu in metadata.json is what lets
+ * the Meta key reach the sheet: plasmashell's activateLauncherMenu looks for an
+ * applet that provides it and activates that one.
+ *
  * The two panel-applet rules this repo keeps relearning apply here too: the
  * size hints live on the PlasmoidItem rather than on the representation, and an
  * applet that shows itself inline uses `fullRepresentation`.
@@ -58,17 +69,19 @@ PlasmoidItem {
     readonly property real magnification: 1.25
 
     // An icon lifts from its own baseline, so it needs somewhere to go. All it
-    // has is the island's content height plus whatever is left of the margin
-    // once the marker and a little daylight are taken out — grow past that and
-    // the icon climbs into the marker, which is what a full-height icon did.
-    // So the resting size is chosen backwards from the room available.
+    // has is the island's content height plus whatever is left of the top
+    // margin once a marker's worth of daylight is kept between the icon and
+    // the island's edge — grow past that and a lifted icon runs off the
+    // island, which is what a full-height icon did. So the resting size is
+    // chosen backwards from the room available.
     readonly property int markerGap: 2
     readonly property int headroom: Math.max(0, islandMargin - markerThickness - markerGap)
     readonly property int iconSize:
         Math.max(8, Math.floor((contentExtent + headroom) / magnification))
 
-    // The marker on the island's edge, and how far the applet sits inside that
-    // edge — the panel background's top margin, from tools/make_panel_svg.py.
+    // The marker on the island's bottom edge, and how far the applet sits
+    // inside that edge — the panel background's margin, from
+    // tools/make_panel_svg.py.
     // Applets are not clipped, so the marker can reach back out. Keep this in
     // step with MARGIN there.
     readonly property int markerThickness: 3
@@ -76,10 +89,13 @@ PlasmoidItem {
 
     readonly property color accent: Kirigami.Theme.highlightColor
 
-    // The rule between the launcher and the running apps. It is drawn here
-    // because the launcher is its own applet: this is the dock's leading edge.
+    // The rule between the mark and the running apps. It sits in the row as a
+    // tile of its own so the daylight either side of it is the row's spacing
+    // plus whatever this adds — equal on both sides by construction.
     readonly property int separatorWidth: 1
     readonly property int separatorSpacing: 10
+    readonly property int separatorBlock:
+        separatorWidth + Math.max(0, separatorSpacing - tileSpacing) * 2
 
     // The hover preview, in the quick-settings sheet's language and — for a
     // single window — at its width.
@@ -102,19 +118,40 @@ PlasmoidItem {
 
     readonly property int previewLabelHeight: Kirigami.Units.gridUnit
 
-    // The rule wants the same daylight on both sides. On its left that gap is
-    // the panel's own spacing between applets — the launcher is a separate
-    // applet — plus the margin below; on its right it is only the margin, so
-    // the row has to start that much further along.
-    readonly property int panelSpacing: Kirigami.Units.smallSpacing
+    // The close button in a thumbnail's corner.
+    readonly property int previewCloseSize: 18
 
-    readonly property int leadIn: horizontal
-        ? panelSpacing + separatorSpacing * 2 + separatorWidth
-        : 0
+    // Daylight at each end of the row, so the mark stands off the island's
+    // left edge by as much as the last window stands off its right. Without it
+    // the island is symmetrical only while something is running: with no
+    // windows the rule and its spacing are gone from the row but were still
+    // counted here, which left the whole gap sitting on the right of the mark.
+    // Six is that gap halved, so an empty island keeps the width it had.
+    readonly property int edgePad: 6
+
+    // …and the island is not symmetrical either, so the two pads are not
+    // equal. Plasma's panel layout keeps a fill spacer after the last applet
+    // (containments/panel/main.qml, the workaround for BUG 454095) and the
+    // GridLayout's columnSpacing between the applet and that spacer is counted
+    // into the width a fitted panel asks for. The spacer itself is empty and
+    // sits at the end, so a centred island is one smallSpacing wider on the
+    // right than on the left — measured here as 6px of panel left of the
+    // applet and 10px right of it. Give that much back from the right pad and
+    // the two visible margins come out level.
+    readonly property int trailingSlack: Kirigami.Units.smallSpacing
+    readonly property int leadingPad: edgePad
+    readonly property int trailingPad: Math.max(0, edgePad - trailingSlack)
+
+    // mark | rule | one tile per window, with the row's spacing between each —
+    // and no rule at all when there is nothing for it to separate.
+    readonly property bool hasTasks: tasksModel.count > 0
+    readonly property int tileCount: tasksModel.count + (hasTasks ? 2 : 1)
 
     readonly property int contentLength:
-        Math.max(1, leadIn + tasksModel.count * iconSize
-                 + Math.max(0, tasksModel.count - 1) * tileSpacing)
+        Math.max(1, leadingPad + trailingPad
+                 + iconSize * (1 + tasksModel.count)
+                 + (hasTasks ? separatorBlock : 0)
+                 + Math.max(0, tileCount - 1) * tileSpacing)
 
     Layout.minimumWidth: horizontal ? contentLength : 0
     Layout.preferredWidth: Layout.minimumWidth
@@ -157,6 +194,14 @@ PlasmoidItem {
         return tasksModel.makeModelIndex(row);
     }
 
+    // A group's windows are children of its row, so one of several and a lone
+    // window are different indices. Both the preview's click and its close
+    // button need this.
+    function windowIndex(row: int, child: int, count: int): var {
+        return count > 1 ? tasksModel.makeModelIndex(row, child)
+                         : tasksModel.makeModelIndex(row);
+    }
+
     // Hovering a thumbnail brings its window forward on the desktop, the way
     // Windows peeks at one. KWin's HighlightWindow effect is what does it, and
     // it is the same call Plasma's own task manager makes for its tooltips —
@@ -172,6 +217,28 @@ PlasmoidItem {
         });
     }
 
+    // Meta, or a shortcut assigned in System Settings, arrives here.
+    Connections {
+        target: Plasmoid
+
+        function onActivated() {
+            root.toggleStart();
+        }
+    }
+
+    function toggleStart(): void {
+        start.visible = !start.visible;
+    }
+
+    StartSheet {
+        id: start
+
+        visualParent: root
+        accent: root.accent
+        applet: Plasmoid
+        edge: Plasmoid.location
+    }
+
     fullRepresentation: Item {
         id: dock
 
@@ -185,29 +252,94 @@ PlasmoidItem {
         property Item previewTile: null
         readonly property alias hideDelay: previewHide
 
-        readonly property Item markedTile: hoveredTile ?? activeTile
-
-        Rectangle {
-            id: separator
-
-            visible: root.horizontal
-            anchors.left: parent.left
-            anchors.leftMargin: root.separatorSpacing
-            anchors.verticalCenter: parent.verticalCenter
-            width: root.separatorWidth
-            height: Math.round(parent.height * 0.55)
-            radius: width / 2
-            color: "#f2f7f2"
-            opacity: 0.18
-        }
+        // The tile whose sheet is open outranks the active window: while the
+        // start sheet is up, the bar belongs to the mark.
+        readonly property Item markedTile:
+            hoveredTile ?? (start.visible ? markTile : null) ?? activeTile
 
         Row {
             id: taskRow
 
+            // Left, at the leading pad: the two pads differ on purpose, so
+            // centring the row here would undo the correction above.
             anchors.left: parent.left
-            anchors.leftMargin: root.leadIn
+            anchors.leftMargin: root.leadingPad
             anchors.verticalCenter: parent.verticalCenter
             spacing: root.tileSpacing
+
+            // The mark. It is a tile like any other, which is the whole point:
+            // the bar slides onto it, it lifts under the pointer, and it sits
+            // on the same baseline as the windows beside it.
+            Item {
+                id: markTile
+
+                width: root.iconSize
+                height: root.contentExtent
+
+                // fullRepresentation is a Component, so the sheet cannot be
+                // handed this tile from the root scope; it takes it from here.
+                Component.onCompleted: start.anchorItem = markTile
+
+                Component.onDestruction: if (dock.hoveredTile === markTile) {
+                    dock.hoveredTile = null;
+                }
+
+                Image {
+                    anchors.bottom: parent.bottom
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    width: root.iconSize
+                    height: root.iconSize
+
+                    source: Qt.resolvedUrl("../icons/naiture.svg")
+                    sourceSize.width: root.iconSize * 2
+                    sourceSize.height: root.iconSize * 2
+                    smooth: true
+
+                    scale: markPointer.containsMouse || start.visible
+                        ? root.magnification : 1
+                    transformOrigin: Item.Bottom
+
+                    Behavior on scale {
+                        NumberAnimation { duration: 160; easing.type: Easing.OutCubic }
+                    }
+                }
+
+                MouseArea {
+                    id: markPointer
+
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+
+                    onEntered: dock.hoveredTile = markTile
+                    onExited: if (dock.hoveredTile === markTile) {
+                        dock.hoveredTile = null;
+                    }
+                    onClicked: {
+                        startDelay.stop();
+                        root.toggleStart();
+                    }
+                }
+            }
+
+            // The rule. It is a tile too, so the row spaces it like everything
+            // else and it never has to be positioned by hand — and a Row skips
+            // a hidden child's spacing as well, so with nothing to separate it
+            // leaves no gap behind: no windows, no rule.
+            Item {
+                visible: root.horizontal && root.hasTasks
+                width: root.separatorBlock
+                height: root.contentExtent
+
+                Rectangle {
+                    anchors.centerIn: parent
+                    width: root.separatorWidth
+                    height: Math.round(parent.height * 0.55)
+                    radius: width / 2
+                    color: "#f2f7f2"
+                    opacity: 0.18
+                }
+            }
 
             Repeater {
                 model: tasksModel
@@ -241,6 +373,11 @@ PlasmoidItem {
                         }
                         if (dock.hoveredTile === tile) {
                             dock.hoveredTile = null;
+                        }
+                        if (dock.previewTile === tile) {
+                            dock.previewTile = null;
+                            preview.visible = false;
+                            root.highlightWindows([]);
                         }
                     }
 
@@ -371,7 +508,29 @@ PlasmoidItem {
             }
         }
 
+        // The mark has no window behind it, so what it opens on hover is the
+        // sheet — a thumbnail of nothing was what it did before.
+        Timer {
+            id: startDelay
+
+            // Short enough to feel like hovering opens it, long enough that
+            // crossing the mark on the way to an app icon does not.
+            interval: 120
+            onTriggered: start.visible = true
+        }
+
         onHoveredTileChanged: {
+            startDelay.stop();
+
+            if (hoveredTile === markTile) {
+                previewDelay.stop();
+                previewHide.restart();
+                if (!start.visible) {
+                    startDelay.restart();
+                }
+                return;
+            }
+
             if (hoveredTile) {
                 previewHide.stop();
                 if (preview.visible) {
@@ -503,6 +662,12 @@ PlasmoidItem {
                                     required property var modelData
                                     required property int index
 
+                                    // The thumbnail and its close button each
+                                    // take the pointer from the other, so both
+                                    // read one state rather than their own.
+                                    readonly property bool over:
+                                        shotPointer.hovered || closeArea.containsMouse
+
                                     width: preview.shotWidth
                                     height: preview.shotHeight
                                     radius: 6
@@ -535,7 +700,7 @@ PlasmoidItem {
                                         height: root.markerThickness
                                         radius: height / 2
                                         color: root.accent
-                                        opacity: shotPointer.hovered ? 1 : 0
+                                        opacity: shot.over ? 1 : 0
 
                                         Behavior on opacity {
                                             NumberAnimation { duration: 150 }
@@ -546,22 +711,77 @@ PlasmoidItem {
                                         id: shotPointer
 
                                         cursorShape: Qt.PointingHandCursor
+                                    }
 
-                                        onHoveredChanged: root.highlightWindows(
-                                            hovered ? [shot.modelData] : [])
+                                    onOverChanged: root.highlightWindows(
+                                        over ? [shot.modelData] : [])
+
+                                    // Windows puts a close on the preview, not
+                                    // just in the menu behind the icon. It is a
+                                    // MouseArea rather than a TapHandler so the
+                                    // click stops here instead of also raising
+                                    // the window underneath it.
+                                    Rectangle {
+                                        anchors.top: parent.top
+                                        anchors.right: parent.right
+                                        anchors.margins: 4
+
+                                        width: root.previewCloseSize
+                                        height: root.previewCloseSize
+                                        radius: height / 2
+
+                                        // The palette's close affordance,
+                                        // palette/naiture.json accent.ember.
+                                        color: closeArea.containsMouse
+                                            ? Qt.rgba(242 / 255, 113 / 255, 106 / 255, 0.95)
+                                            : Qt.rgba(0, 0, 0, 0.5)
+                                        border.width: 1
+                                        border.color: Qt.rgba(1, 1, 1, 0.18)
+
+                                        opacity: shot.over ? 1 : 0
+                                        visible: opacity > 0
+
+                                        Behavior on opacity {
+                                            NumberAnimation { duration: 120 }
+                                        }
+
+                                        Behavior on color {
+                                            ColorAnimation { duration: 120 }
+                                        }
+
+                                        Kirigami.Icon {
+                                            anchors.centerIn: parent
+                                            width: Math.round(parent.width * 0.55)
+                                            height: width
+                                            source: "window-close-symbolic"
+                                            color: "#f2f7f2"
+                                            isMask: true
+                                            active: false
+                                        }
+
+                                        MouseArea {
+                                            id: closeArea
+
+                                            anchors.fill: parent
+                                            hoverEnabled: true
+                                            cursorShape: Qt.PointingHandCursor
+
+                                            onClicked: {
+                                                root.highlightWindows([]);
+                                                tasksModel.requestClose(
+                                                    root.windowIndex(dock.previewTile.index,
+                                                                     shot.index,
+                                                                     preview.windowIds.length));
+                                            }
+                                        }
                                     }
 
                                     TapHandler {
                                         onTapped: {
-                                            // A group's windows are children of
-                                            // its row, so a single window and
-                                            // one of several are different
-                                            // indices.
-                                            const taskRowIndex = dock.previewTile.index;
-                                            const modelIndex = preview.windowIds.length > 1
-                                                ? tasksModel.makeModelIndex(taskRowIndex, shot.index)
-                                                : tasksModel.makeModelIndex(taskRowIndex);
-                                            tasksModel.requestActivate(modelIndex);
+                                            tasksModel.requestActivate(
+                                                root.windowIndex(dock.previewTile.index,
+                                                                 shot.index,
+                                                                 preview.windowIds.length));
                                             dock.hideDelay.stop();
                                             preview.visible = false;
                                             dock.previewTile = null;
@@ -588,14 +808,14 @@ PlasmoidItem {
         }
 
         // One marker for the whole dock, so it travels between tiles instead of
-        // blinking out of one and into the next. It rides on the island's top
-        // edge rather than the tile's — applets are not clipped, so it may sit
-        // outside this one.
+        // blinking out of one and into the next. It rides on the island's
+        // bottom edge rather than the tile's — applets are not clipped, so it
+        // may sit outside this one.
         Rectangle {
             id: marker
 
             visible: dock.markedTile !== null
-            y: -root.islandMargin
+            y: dock.height + root.islandMargin - root.markerThickness
             height: root.markerThickness
             radius: height / 2
             color: root.accent
