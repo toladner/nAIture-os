@@ -360,6 +360,33 @@ it is seeded by the view's number so the same twelve come back identical. Only
 the views actually opened are ever drawn — about 50ms each, once per login.
 Nothing accumulates and nothing is fetched.
 
+**Two things on the tab strip are out of reach, and both were tried.** The
+tab's close button keeps Breeze's filled circle: `image:` on the `close-button`
+subcontrol does nothing, because Konsole builds its own button rather than
+using QTabBar's, and `qproperty-icon` on that button is overwritten when
+Konsole sets the icon in code afterwards. The new-tab `+` is further out still
+— Konsole hangs it off the **QTabWidget** with `setCornerWidget`, top-left,
+while `TabBarUserStyleSheetFile` applies to the QTabBar, so no selector in that
+file can see it. It can be neither moved to the right of the tabs nor redrawn.
+`tab-close-*.svg` are installed and unused; they are what the button would wear
+if it were ours.
+
+**The style sheet is written verbatim and the colours substituted afterwards.**
+It is full of `$` and backticks, so an unquoted heredoc expands it — a backtick
+in a comment ran as a command and silently ate the words around it. Placeholders
+plus `sed`, never interpolation.
+
+**Deferred: whether the console should be our own window.** Everything above is
+the ceiling of what configuration reaches. A small KF6 app around
+`konsolepart.so` — already installed, the component Yakuake and Kate embed —
+would make the tab strip ours: tabs on the titlebar's line, a marker that
+travels, our own `+` and `x`. Everything built here survives it, since the
+views, the scenes and `konsole/naiture-view` are all below that line. It is not
+being done yet, because it costs a compiler and five `-devel` packages at
+install time and this repo needs no root today. Revisit once the browser and the
+file explorer have been restyled, and decide for all three together rather than
+for the console alone.
+
 Verify without a screenshot: a running Konsole exports
 `org.kde.konsole.KXmlGuiWindow.isToolBarVisible` and
 `org.kde.konsole.Session.profile`.

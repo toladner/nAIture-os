@@ -62,7 +62,11 @@ write_tabbar_css() {
   accent_dim="$(IFS=,; set -- $accent
     printf 'rgb(%d, %d, %d)' $(( ($1 + 13) / 2 )) $(( ($2 + 20) / 2 )) $(( ($3 + 16) / 2 )))"
   accent="rgb(${accent//,/, })"
-  cat > "$DATA/naiture/konsole-tabbar.css" <<CSS
+  # The style sheet is written verbatim and the colours put in afterwards. An
+  # unquoted heredoc would expand it, and a style sheet is exactly the kind of
+  # text that has $ and backticks in it — a backtick in a comment here silently
+  # ran as a command and ate the words around it.
+  cat > "$DATA/naiture/konsole-tabbar.css" <<'CSS' 
 /* Written by scripts/console.sh — edit that, not this. */
 
 /* The strip itself is the window's own surface, so the band at the top of a
@@ -95,13 +99,13 @@ QTabBar::tab {
 
 QTabBar::tab:hover {
     background: rgba(240, 248, 240, 0.06);
-    border-bottom-color: ${accent_dim};
+    border-bottom-color: __ACCENT_DIM__;
     color: #f2f7f2;
 }
 
 QTabBar::tab:selected {
     background: #18241c;
-    border-bottom-color: ${accent};
+    border-bottom-color: __ACCENT__;
     /* Qt draws a border along the radius, so a 9px bottom corner would bend
        the bar into a smile. Nearly square down there keeps it a bar. */
     border-bottom-left-radius: 2px;
@@ -115,15 +119,20 @@ QTabBar::tab:selected:hover {
 
 /* Close is the window's own close button in miniature: the glyph and nothing
    else, faint until the pointer is on it. */
+/* The tab's close button cannot be restyled from here, and both ways in were
+   tried: `image:` on the close-button subcontrol does nothing because Konsole
+   builds its own button rather than using QTabBar's, and `qproperty-icon` on
+   that button is overwritten when Konsole sets the icon in code afterwards. So
+   the x stays Breeze's filled circle. tab-close-*.svg are installed and unused
+   for now; they are what the button would wear if it were ours.
+
+   The + is further out still: Konsole hangs it off the *QTabWidget* with
+   setCornerWidget, top-left, and this style sheet is on the QTabBar, so no
+   selector here can see it at all. It cannot be moved to the right of the tabs
+   or redrawn as a plain +. */
 QTabBar::close-button {
     subcontrol-position: right;
-    image: url(${DATA}/naiture/tab-close-rest.svg);
     margin: 2px 4px 2px 10px;
-}
-
-QTabBar::close-button:hover,
-QTabBar::close-button:pressed {
-    image: url(${DATA}/naiture/tab-close-hot.svg);
 }
 
 /* The + at the end of the strip, and the arrows that appear once there are
@@ -154,6 +163,11 @@ QTabWidget::pane {
     background: transparent;
 }
 CSS
+
+  sed -i -e "s|__ACCENT_DIM__|$accent_dim|g" \
+         -e "s|__ACCENT__|$accent|g" \
+         -e "s|__DATA__|$DATA|g" \
+         "$DATA/naiture/konsole-tabbar.css"
   echo "  tab bar -> $DATA/naiture/konsole-tabbar.css"
 }
 
