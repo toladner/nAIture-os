@@ -81,9 +81,16 @@ PlasmoidItem {
     readonly property int separatorWidth: 1
     readonly property int separatorSpacing: 10
 
-    // The hover preview, in the quick-settings sheet's language and at its
-    // width.
+    // The hover preview, in the quick-settings sheet's language and — for a
+    // single window — at its width.
     readonly property int previewWidth: 400
+
+    // How wide the whole strip of thumbnails is allowed to get, as a multiple
+    // of one thumbnail. Sharing a fixed card between n windows makes each 1/n
+    // as wide, which is unreadable by three; letting the card grow instead
+    // costs width far more slowly. `2 - 2^(1-n)` gives 1x, 1.5x, 1.75x, 1.875x
+    // — always widening, never past twice.
+    readonly property real previewSpread: 2
     readonly property int previewPadding: 12
     readonly property int previewSpacing: 8
     readonly property int previewRadius: 20
@@ -397,30 +404,41 @@ PlasmoidItem {
 
             readonly property int shotCount: Math.max(1, windowIds.length)
 
+            // One thumbnail's width when it is the only one.
+            readonly property int singleShotWidth: root.previewWidth - root.previewPadding * 2
+
+            // What the strip of thumbnails is allowed to occupy, capped so a
+            // dozen windows cannot push the card off the screen.
+            readonly property int shotsWidth: Math.min(
+                singleShotWidth * (root.previewSpread
+                                   - Math.pow(2, 1 - shotCount)),
+                Plasmoid.containment.screenGeometry.width - root.previewPadding * 2 - 40)
+
             // With one preview the name says which app this is; with several,
             // the icon above them already has.
             readonly property bool showName: shotCount <= 1
             readonly property int shotWidth:
-                (root.previewWidth - root.previewPadding * 2
-                 - root.previewSpacing * (shotCount - 1)) / shotCount
+                (shotsWidth - root.previewSpacing * (shotCount - 1)) / shotCount
             readonly property int shotHeight: Math.round(shotWidth * 9 / 16)
 
             // The dialog reads mainItem's implicit size early and keeps what it
             // first gets, so this is worked out from numbers the applet already
             // knows rather than from the card inside it — a height that waits
             // for a child arrives as 0 and the card ends up clipped.
+            readonly property int cardWidth: shotsWidth + root.previewPadding * 2
+
             readonly property int cardHeight:
                 root.previewPadding * 2 + shotHeight
                 + (showName ? root.previewSpacing + root.previewLabelHeight : 0)
 
             mainItem: Item {
-                implicitWidth: root.previewWidth
+                implicitWidth: preview.cardWidth
                 implicitHeight: preview.cardHeight + root.previewLift
 
                 Rectangle {
                     anchors.top: parent.top
                     anchors.left: parent.left
-                    width: root.previewWidth
+                    width: preview.cardWidth
                     height: preview.cardHeight
 
                     radius: root.previewRadius

@@ -252,7 +252,10 @@ through `TaskManager.ScreencastingRequest` and rendered by
 preview is up.
 
 Grouping is on, so a tile can stand for several windows; a group parent's
-`WinIdList` carries every one of them, and each gets its own thumbnail. Clicking
+`WinIdList` carries every one of them, and each gets its own thumbnail. The card
+widens rather than dividing a fixed width — `2 - 2^(1-n)` thumbnails' worth, so
+1x, 1.5x, 1.75x, never past twice — because sharing one card between n windows
+makes each 1/n as wide and unreadable by three. Clicking
 one raises that window: a group's windows are *children* of its row, so it is
 `makeModelIndex(row, child)` for one of several and `makeModelIndex(row)` for a
 lone window.
