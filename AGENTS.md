@@ -66,6 +66,30 @@ desktop pulls in a **full Plasma upgrade** as dependencies. Check
 `plasmashell --version` against the Klassy build before installing, and tell the
 user what the transaction will actually do.
 
+**Klassy splits its settings across config groups.** Not one `[Windeco]`
+section: `[Windeco]` (corner radius, button shape, icon style),
+`[TitleBarOpacity]` (titlebar opacity and its Override flags),
+`[TitleBarSpacing]` (title alignment, titlebar margins), `[ButtonColors]`
+(icon/background colours and opacities), `[ButtonBehaviour]` (the Show*
+visibility keys), `[ButtonSizing]` (button spacing), `[WindowOutlineStyle]`.
+A key written to the wrong group is accepted and silently ignored. The
+authoritative mapping is `libbreezecommon/breezesettingsdata.kcfg` in the
+Klassy source — read it rather than guessing:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/paulmcauley/klassy/master/libbreezecommon/breezesettingsdata.kcfg
+```
+
+Entries written as `Name$(NameActive)` expand to `NameActive` / `NameInactive`.
+
+**Some settings still do not apply from a config edit.** With correct groups and
+values that persist in the file, `ButtonIconOpacityActive` and the titlebar
+opacity Override flags produced no rendered change after
+`qdbus-qt6 org.kde.KWin /KWin reconfigure`. Klassy also rewrites klassyrc itself
+(it re-adds `[Global] LookAndFeelSet` immediately after deletion), so it manages
+this file rather than merely reading it. For those settings, have the user apply
+them once in `klassy-settings` and diff the file to learn what actually changes.
+
 **Klassy reads `~/.config/klassy/klassyrc`.** Not `~/.config/klassyrc` — that
 path is accepted and silently ignored, which looks exactly like the corner
 radius having no effect. Confirm what KWin actually loaded with

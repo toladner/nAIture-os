@@ -13,6 +13,9 @@ INACTIVE_OPACITY="${NAITURE_TITLEBAR_INACTIVE:-60}" # design: rgba(13,24,17,0.60
 # The design's dock rests at 20% and comes up on hover; the close glyph matches.
 BUTTON_REST_OPACITY="${NAITURE_BUTTON_REST:-20}"
 BUTTON_REST_OPACITY_INACTIVE="${NAITURE_BUTTON_REST_INACTIVE:-12}"
+# R - sqrt(R^2/2) for R = WindowCornerRadius, rounded: the inset that puts the
+# button's outer corner on the corner arc.
+BUTTON_MARGIN="${NAITURE_BUTTON_MARGIN:-6}"
 
 has_klassy() {
   [[ -f /usr/lib64/qt6/plugins/org.kde.kdecoration3/org.kde.klassy.so ]] ||
@@ -20,70 +23,78 @@ has_klassy() {
 }
 
 if has_klassy; then
-  # Klassy reads ~/.config/klassy/klassyrc — NOT ~/.config/klassyrc. Writing to
-  # the latter is silently ignored, which looks exactly like the radius not
-  # working. Keys go under both groups; which one is live varies by version.
-  for g in Common Windeco; do
-    set_k() { kwriteconfig6 --file klassy/klassyrc --group "$g" --key "$1" "$2"; }
-    set_k WindowCornerRadius        "$RADIUS"
-    # Without borders Klassy leaves the corners square unless told otherwise,
-    # and it wants to own the KWin border size itself.
-    set_k RoundAllCornersWhenNoBorders true
-    set_k KwinBorderSize            None
-    set_k ActiveTitleBarOpacity     "$ACTIVE_OPACITY"
-    set_k InactiveTitleBarOpacity   "$INACTIVE_OPACITY"
-    set_k ApplyOpacityToHeader      true
-    set_k BlurTransparentTitleBars  true
-    # A maximised window fills the screen, so its glass would sit on nothing.
-    set_k OpaqueMaximizedTitleBars  true
-    set_k DrawTitleBarSeparator     false
-    set_k DrawBackgroundGradient    false
-    # A neutral hairline, like the design's rgba(255,255,255,0.18) rule. The
-    # accent styles make the outline follow the hovered button, which reads as
-    # the window flashing a coloured border.
-    set_k WindowOutlineStyleActive   WindowOutlineContrast
-    set_k WindowOutlineStyleInactive WindowOutlineContrast
-    set_k ThinWindowOutlineThickness 1
-    set_k TitleAlignment            AlignCenterFullWidth
+  # Klassy splits its settings across several config groups in
+  # ~/.config/klassy/klassyrc — NOT one [Windeco] section. Writing a key into
+  # the wrong group is accepted and silently ignored. The mapping below comes
+  # from libbreezecommon/breezesettingsdata.kcfg in the Klassy source.
+  k() { kwriteconfig6 --file klassy/klassyrc --group "$1" --key "$2" "$3"; }
 
-    # One close button, in the design's language: a small rounded tile whose
-    # glyph sits at the same resting opacity as the design's dock (20%), so it
-    # is barely there until hovered — then it takes the ember tint the design
-    # uses for "release to close".
-    set_k ButtonShape                    ShapeSmallRoundedSquare
-    set_k ButtonIconStyle                StyleMaterialDynamic
-    set_k IconSize                       IconSmallMedium
-    set_k ButtonSpacingRight             6
-    set_k ButtonIconColorsActive         TitleBarText
-    set_k ButtonIconColorsInactive       TitleBarText
-    set_k ButtonIconOpacityActive        "$BUTTON_REST_OPACITY"
-    set_k ButtonIconOpacityInactive      "$BUTTON_REST_OPACITY_INACTIVE"
-    set_k CloseButtonIconColorActive     WhiteWhenHoverPress
-    set_k ButtonBackgroundColorsActive   AccentNegativeClose
-    set_k ButtonBackgroundColorsInactive AccentNegativeClose
-    set_k ButtonBackgroundOpacityActive  90
-    # Hovering a button otherwise recolours the whole window outline to match
-    # it, which reads as the window flashing a border. Keep the outline neutral
-    # and drop the ring around the buttons entirely.
-    set_k ColorizeWindowOutlineWithButton false
+  # --- frame shape -------------------------------------------------------
+  k Windeco WindowCornerRadius            "$RADIUS"
+  k Windeco RoundAllCornersWhenNoBorders  true
+  k Windeco DrawBackgroundGradient        false
+  k Windeco DrawTitleBarSeparator         false
+  k Windeco ButtonShape                   ShapeSmallRoundedSquare
+  k Windeco ButtonIconStyle               StyleMaterialDynamic
+  k Windeco IconSize                      IconSmallMedium
+  # hovering a button otherwise recolours the whole window outline
+  k Windeco ColorizeWindowOutlineWithButton false
 
-    # Klassy gives the close button its own visibility keys, separate from the
-    # generic ones; setting only the generic pair leaves a solid tile at rest.
-    for state in Active Inactive; do
-      set_k "ShowOutlineNormally$state"      false
-      set_k "ShowOutlineOnHover$state"       false
-      set_k "ShowOutlineOnPress$state"       false
-      set_k "ShowCloseOutlineNormally$state" false
-      set_k "ShowCloseOutlineOnHover$state"  false
-      set_k "ShowCloseOutlineOnPress$state"  false
-      set_k "ShowCloseBackgroundNormally$state" false
-      set_k "ShowCloseBackgroundOnHover$state"  true
-      set_k "ShowCloseBackgroundOnPress$state"  true
-      set_k "ShowCloseIconNormally$state"       true
-      set_k "ShowBackgroundNormally$state"      false
-      set_k "ShowBackgroundOnHover$state"       true
-    done
+  # --- glass -------------------------------------------------------------
+  # The opacity values do nothing unless the Override flags are set.
+  k TitleBarOpacity OverrideActiveTitleBarOpacity   true
+  k TitleBarOpacity OverrideInactiveTitleBarOpacity true
+  k TitleBarOpacity ActiveTitleBarOpacity           "$ACTIVE_OPACITY"
+  k TitleBarOpacity InactiveTitleBarOpacity         "$INACTIVE_OPACITY"
+  k TitleBarOpacity ApplyOpacityToHeader            true
+  k TitleBarOpacity BlurTransparentTitleBars        true
+  # a maximised window fills the screen, so its glass would sit on nothing
+  k TitleBarOpacity OpaqueMaximizedTitleBars        true
+
+  # --- title and button placement ---------------------------------------
+  k TitleBarSpacing TitleAlignment              AlignCenterFullWidth
+  # Unlock the pairs first or the second value of each is ignored.
+  k TitleBarSpacing LockTitleBarLeftRightMargins false
+  k TitleBarSpacing LockTitleBarTopBottomMargins false
+  # For a corner of radius R, a button whose outer corner sits on the arc
+  # needs an inset of R - sqrt(R^2/2) — about 6 at the design's R=22.
+  k TitleBarSpacing TitleBarLeftMargin          "$BUTTON_MARGIN"
+  k TitleBarSpacing TitleBarRightMargin         "$BUTTON_MARGIN"
+  k TitleBarSpacing TitleBarTopMargin           "$BUTTON_MARGIN"
+  k TitleBarSpacing TitleBarBottomMargin        "$BUTTON_MARGIN"
+  k ButtonSizing    ButtonSpacingRight          4
+
+  # --- the close button --------------------------------------------------
+  # Barely there at rest, like the design's dock; ember tile on hover.
+  k ButtonColors ButtonIconOpacityActive     "$BUTTON_REST_OPACITY"
+  k ButtonColors ButtonIconOpacityInactive   "$BUTTON_REST_OPACITY_INACTIVE"
+  k ButtonColors ButtonIconColorsActive      TitleBarText
+  k ButtonColors ButtonIconColorsInactive    TitleBarText
+  k ButtonColors CloseButtonIconColorActive  WhiteWhenHoverPress
+  k ButtonColors ButtonBackgroundColorsActive   AccentNegativeClose
+  k ButtonColors ButtonBackgroundColorsInactive AccentNegativeClose
+  k ButtonColors ButtonBackgroundOpacityActive  90
+
+  for state in Active Inactive; do
+    k ButtonBehaviour "ShowCloseBackgroundNormally$state" false
+    k ButtonBehaviour "ShowCloseBackgroundOnHover$state"  true
+    k ButtonBehaviour "ShowCloseBackgroundOnPress$state"  true
+    k ButtonBehaviour "ShowCloseIconNormally$state"       true
+    k ButtonBehaviour "ShowBackgroundNormally$state"      false
+    k ButtonBehaviour "ShowBackgroundOnHover$state"       true
+    k ButtonBehaviour "ShowOutlineNormally$state"         false
+    k ButtonBehaviour "ShowOutlineOnHover$state"          false
+    k ButtonBehaviour "ShowOutlineOnPress$state"          false
+    k ButtonBehaviour "ShowCloseOutlineNormally$state"    false
+    k ButtonBehaviour "ShowCloseOutlineOnHover$state"     false
+    k ButtonBehaviour "ShowCloseOutlineOnPress$state"     false
   done
+
+  # --- outline -----------------------------------------------------------
+  k WindowOutlineStyle WindowOutlineStyleActive   WindowOutlineContrast
+  k WindowOutlineStyle WindowOutlineStyleInactive WindowOutlineContrast
+  k WindowOutlineStyle WindowOutlineThickness     1
+
   library=org.kde.klassy
   theme=Klassy
   echo "  windows -> Klassy, ${RADIUS}px corners, translucent titlebars"
