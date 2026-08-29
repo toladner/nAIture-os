@@ -83,8 +83,13 @@ PlasmoidItem {
     // the island's edge — grow past that and a lifted icon runs off the
     // island, which is what a full-height icon did. So the resting size is
     // chosen backwards from the room available.
+    // The marker sits on the island's *bottom* edge, so the top margin has no
+    // marker to keep clear of — only a little daylight between the lifted icon
+    // and the island's edge. Subtracting the marker's thickness up here as
+    // well left the icon resting 3px smaller than the island had room for, and
+    // that 3px was empty above it every moment nothing was hovered.
     readonly property int markerGap: 2
-    readonly property int headroom: Math.max(0, islandMargin - markerThickness - markerGap)
+    readonly property int headroom: Math.max(0, islandMargin - markerGap)
     readonly property int iconSize:
         Math.max(8, Math.floor((contentExtent + headroom) / magnification))
 
