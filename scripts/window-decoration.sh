@@ -27,7 +27,12 @@ if has_klassy; then
   # ~/.config/klassy/klassyrc — NOT one [Windeco] section. Writing a key into
   # the wrong group is accepted and silently ignored. The mapping below comes
   # from libbreezecommon/breezesettingsdata.kcfg in the Klassy source.
-  k() { kwriteconfig6 --file klassy/klassyrc --group "$1" --key "$2" "$3"; }
+  # --notify is essential: Klassy reloads through KConfigWatcher, which only
+  # fires for writes that carry KDE's change notification. Without it the file
+  # is correct and the decoration simply never re-reads it — which looks exactly
+  # like the setting having no effect. `qdbus ... /KWin reconfigure` does not
+  # cover this.
+  k() { kwriteconfig6 --notify --file klassy/klassyrc --group "$1" --key "$2" "$3"; }
 
   # --- frame shape -------------------------------------------------------
   k Windeco WindowCornerRadius            "$RADIUS"

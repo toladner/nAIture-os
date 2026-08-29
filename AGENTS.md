@@ -82,13 +82,14 @@ curl -fsSL https://raw.githubusercontent.com/paulmcauley/klassy/master/libbreeze
 
 Entries written as `Name$(NameActive)` expand to `NameActive` / `NameInactive`.
 
-**Some settings still do not apply from a config edit.** With correct groups and
-values that persist in the file, `ButtonIconOpacityActive` and the titlebar
-opacity Override flags produced no rendered change after
-`qdbus-qt6 org.kde.KWin /KWin reconfigure`. Klassy also rewrites klassyrc itself
-(it re-adds `[Global] LookAndFeelSet` immediately after deletion), so it manages
-this file rather than merely reading it. For those settings, have the user apply
-them once in `klassy-settings` and diff the file to learn what actually changes.
+**Write Klassy settings with `kwriteconfig6 --notify`.** Klassy reloads through
+`KConfigWatcher`, which only fires for writes carrying KDE's change
+notification. Without `--notify` the file ends up correct and the decoration
+never re-reads it, which is indistinguishable from the setting having no effect
+— and `qdbus-qt6 org.kde.KWin /KWin reconfigure` does **not** cover it, though
+it does apply the plugin/border keys in `kwinrc`. This cost hours: with the
+right groups and the right values, nothing rendered until the writes were
+notified.
 
 **Klassy reads `~/.config/klassy/klassyrc`.** Not `~/.config/klassyrc` — that
 path is accepted and silently ignored, which looks exactly like the corner
