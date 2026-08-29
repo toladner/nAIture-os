@@ -298,6 +298,72 @@ size hints in the wrong place reserve about 40px and draw nothing in it, and a
 replaced by a placeholder icon that does nothing when clicked. Both applets here
 are inline; Plasma's own panel spacer is the model.
 
+## The console's window
+
+`scripts/console.sh` builds it. The design is one band at the top of a window
+and then the content: tabs, and no second row. See CONTRIBUTING.md for the
+principles this comes from.
+
+**Konsole draws no client-side decoration**, so tabs cannot share the line with
+minimise/maximise/close. The titlebar stays. The *menu* does make it onto that
+line, as the decoration's application-menu button — `ButtonsOnLeft "N"` in
+`scripts/window-decoration.sh`, which only draws for windows that export a
+menu.
+
+**There are two toolbars, and both start visible.** `mainToolBar` carries the
+hamburger, split view, copy, paste and find; `sessionToolbar` comes with the
+session. Hiding one leaves the other. KMainWindow reads visibility from its
+autosave group and writes the flat spelling itself when a toolbar is hidden by
+hand, so write both:
+
+```
+[MainWindow][Toolbar mainToolBar]  Hidden=true
+[Toolbar mainToolBar]              Hidden=true
+```
+
+**A view is a profile.** `Session.setProfile` is the whole of Konsole's runtime
+API for appearance — there is no way to hand a session a colour scheme, and the
+scheme is what carries the wallpaper. So twelve profiles differ in nothing but
+their scheme, and each scheme names a different picture.
+
+**The chooser runs inside the session, not outside it.** Konsole puts
+`KONSOLE_DBUS_SERVICE` / `KONSOLE_DBUS_SESSION` / `KONSOLE_DBUS_WINDOW` into
+every session's environment, so a session can name itself and change its own
+profile. It emits **no signal when a tab is created**, so anything watching from
+outside has to poll — a daemon per window, for ever. `konsole/naiture-view` is
+the session's own command instead: it picks a view, sets it, and `exec`s what
+was actually asked for. `konsole -e` replaces a profile's `Command` outright, so
+anything launching a console has to name the helper on the line
+(`plasmoids/org.naiture.dock/contents/ui/claude.js` does).
+
+**Profile and colour-scheme keys belong in `[General]`.** Appending them to the
+file puts them under whichever group happens to be last, where Konsole reads
+them without complaint and ignores them — the same failure mode as Klassy's
+groups. Write every one with `kwriteconfig6 --file <path> --group General`.
+A scheme's wallpaper is `Wallpaper` (a path), `WallpaperOpacity` (0..1) and
+`FillStyle` (`Tile`, `Stretch`, `Crop`, `Adapt`, `NoScaling`).
+
+**Fedora ships `/etc/xdg/konsolerc`.** `kwriteconfig6` declines to write a value
+the cascade already resolves to, so a write can silently do nothing and be
+correct. Read it back with `kreadconfig6` rather than grepping the file, or you
+will conclude the key was rejected.
+
+The authoritative key list is `konsole.kcfg` — read it rather than guessing:
+
+```bash
+curl -fsSL https://invent.kde.org/utilities/konsole/-/raw/master/src/settings/konsole.kcfg
+```
+
+**The pictures are not stored.** `tools/make_scene.py` renders into
+`$XDG_RUNTIME_DIR/naiture/scenes`, which is tmpfs and is emptied at logout, and
+it is seeded by the view's number so the same twelve come back identical. Only
+the views actually opened are ever drawn — about 50ms each, once per login.
+Nothing accumulates and nothing is fetched.
+
+Verify without a screenshot: a running Konsole exports
+`org.kde.konsole.KXmlGuiWindow.isToolBarVisible` and
+`org.kde.konsole.Session.profile`.
+
 ## Things that will trip you up
 
 **`sudo` may have no TTY.** In non-interactive shells `sudo` fails with "a
@@ -325,6 +391,17 @@ panel creation, removal and `location`, and `floating`; `height`, `lengthMode`,
 returns an empty string, so the return value tells you nothing. Applet config
 written through `widgetById(...).writeConfig()` also did not stick — write it
 into the applets file instead, while the shell is stopped.
+
+**`pkill -f` matches the shell you are running it from.** The pattern is
+compared against every process's whole command line, and the command line of the
+tool call contains the pattern — so `pkill -f 'konsole --profile'` kills the call
+itself and comes back as exit 137 or 144 with nothing done. Match on the process
+name (`pgrep -x konsole`) and exclude what you want to keep.
+
+**`XDG_CONFIG_HOME` is the half that matters when testing.** `scripts/accent.sh`
+writes `kdeglobals`, which lives there — redirect only `XDG_DATA_HOME` and a
+test run will change the accent on the real desktop and leave `verify.sh`
+reporting that kdeglobals and the desktop theme disagree.
 
 **Testing safely.** Point `XDG_CONFIG_HOME` and `XDG_DATA_HOME` at a temp
 directory and pass `--no-apply`; that exercises the whole installer without
