@@ -247,17 +247,27 @@ install_views() {
     kwriteconfig6 --file "$profile" --group Appearance \
       --key ColorScheme "NaitureView$n"
     dress_profile "$profile" "naiture-view-$n"
+
+    # The same view under Claude's mark. A tab carries no icon by default —
+    # twelve identical terminal glyphs say nothing — but an AI task is a
+    # different kind of thing from a shell, and that is worth one icon. The two
+    # families share this view's colour scheme, so only the profile doubles.
+    local claude="$DATA/konsole/naiture-claude-$n.profile"
+    cp "$REPO/konsole/Naiture.profile" "$claude"
+    kwriteconfig6 --file "$claude" --group Appearance \
+      --key ColorScheme "NaitureView$n"
+    dress_profile "$claude" "naiture-claude-$n" naiture-claude
   done
-  echo "  views   -> $VIEWS profiles, drawn on first use into $scenes"
+  echo "  views   -> $VIEWS views x2 (plain and Claude), drawn on first use into $scenes"
 }
 
 # What every naiture profile has in common: no icon on the tab, a tab named
 # after the directory rather than after the profile that drew it, and the
 # helper as its command.
-dress_profile() { # dress_profile <file> <name>
-  local f="$1" name="$2"
+dress_profile() { # dress_profile <file> <name> [icon]
+  local f="$1" name="$2" icon="${3:-naiture-blank}"
   kwriteconfig6 --file "$f" --group General --key Name "$name"
-  kwriteconfig6 --file "$f" --group General --key Icon naiture-blank
+  kwriteconfig6 --file "$f" --group General --key Icon "$icon"
   kwriteconfig6 --file "$f" --group General --key LocalTabTitleFormat "%d"
   kwriteconfig6 --file "$f" --group General --key RemoteTabTitleFormat "%H"
   kwriteconfig6 --file "$f" --group General \

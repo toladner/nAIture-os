@@ -57,6 +57,7 @@ rm -f  "$DATA/konsole/Naiture.colorscheme" "$DATA/konsole/Naiture.profile"
 # bar's stylesheet, and the pictures — which only ever lived in tmpfs.
 rm -f  "$DATA"/konsole/NaitureView[0-9][0-9].colorscheme
 rm -f  "$DATA"/konsole/naiture-view-[0-9][0-9].profile
+rm -f  "$DATA"/konsole/naiture-claude-[0-9][0-9].profile
 rm -f  "$DATA/icons/hicolor/scalable/apps/naiture-blank.svg"
 rm -f  "$HOME/.local/bin/naiture-view"
 rm -rf "$DATA/naiture"

@@ -31,6 +31,20 @@ set -u
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 VIEWS=12
 
+# Two families of profile per view, identical but for the tab's icon. Which one
+# this session gets is decided by what it was asked to run: an AI task is a
+# different kind of thing from a shell and is worth saying so, while twelve
+# identical terminal glyphs would only be noise. This catches every session
+# started as a Claude console — the dock names `claude` on the line — and not a
+# claude typed into a shell later, because a profile is chosen once, at the
+# moment the session starts, and Konsole never asks again.
+family_for() {
+  case "$(basename "${1:-}")" in
+    claude|claude-*) echo naiture-claude ;;
+    *)               echo naiture-view ;;
+  esac
+}
+
 # The renderer, wherever this copy of the helper can see it: beside it under
 # the theme's own directory, or in the theme's directory outright, since a
 # second copy of this script lives on PATH so that `konsole -e naiture-view`
@@ -65,7 +79,7 @@ taken() {
   for id in $ids; do
     [[ "/Sessions/$id" == "${KONSOLE_DBUS_SESSION:-}" ]] && continue
     p="$(konsole_call "/Sessions/$id" org.kde.konsole.Session.profile)"
-    [[ "$p" == naiture-view-* ]] && echo "${p##*-}"
+    [[ "$p" == naiture-view-* || "$p" == naiture-claude-* ]] && echo "${p##*-}"
   done
 }
 
@@ -93,9 +107,10 @@ ensure_scene() {
 }
 
 VIEW="$(pick)"
+FAMILY="$(family_for "${1:-}")"
 ensure_scene "$VIEW" && \
   konsole_call "${KONSOLE_DBUS_SESSION:-/Sessions/1}" \
-               org.kde.konsole.Session.setProfile "naiture-view-$VIEW" >/dev/null
+               org.kde.konsole.Session.setProfile "$FAMILY-$VIEW" >/dev/null
 
 # Whatever this session was actually for.
 if [[ $# -gt 0 ]]; then
