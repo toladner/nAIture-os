@@ -42,15 +42,21 @@ def rnd(i, salt):
     return x - math.floor(x)
 
 
-def sky(w, h):
-    """linear-gradient(174deg, ...) — a near-vertical ramp, tilted 6deg."""
+def sky(w, h, stops=None, angle=None):
+    """linear-gradient(174deg, ...) — a near-vertical ramp, tilted 6deg.
+
+    The stops and the tilt are arguments so that tools/make_scene.py can ask
+    for the same ramp under a different sun without copying it.
+    """
+    stops = SKY_STOPS if stops is None else stops
+    angle = SKY_ANGLE if angle is None else angle
     ramp = Image.new("RGB", (1, 1024))
     px = ramp.load()
     for y in range(1024):
         t = y / 1023
-        for i in range(len(SKY_STOPS) - 1):
-            p0, c0 = SKY_STOPS[i]
-            p1, c1 = SKY_STOPS[i + 1]
+        for i in range(len(stops) - 1):
+            p0, c0 = stops[i]
+            p1, c1 = stops[i + 1]
             if p0 <= t <= p1:
                 k = (t - p0) / (p1 - p0)
                 # interpolate in OKLCH, as the browser does
@@ -60,11 +66,11 @@ def sky(w, h):
 
     # Size the ramp to the bounding box of the tilted output rect, so that
     # after rotating back the full 0->1 range lands inside the crop.
-    a = math.radians(abs(SKY_ANGLE - 180))
+    a = math.radians(abs(angle - 180))
     cw = round(w * math.cos(a) + h * math.sin(a))
     ch = round(h * math.cos(a) + w * math.sin(a))
     big = ramp.resize((cw, ch), Image.BICUBIC).rotate(
-        SKY_ANGLE - 180, resample=Image.BICUBIC, expand=True
+        angle - 180, resample=Image.BICUBIC, expand=True
     )
     left, top = (big.size[0] - w) // 2, (big.size[1] - h) // 2
     return big.crop((left, top, left + w, top + h)).convert("RGB")
