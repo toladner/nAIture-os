@@ -36,7 +36,14 @@ Rectangle {
     // used outside the applet.
     property color accent: Tokens.sky
 
+    // A tile that has somewhere further to go carries a chevron at its
+    // trailing edge — Windows' quick settings say "there is more of this
+    // through here" the same way. Tapping the chevron goes there; tapping
+    // anywhere else on the tile still just switches the thing on and off.
+    property bool configurable: false
+
     signal toggled()
+    signal configure()
 
     implicitHeight: row.implicitHeight + Tokens.tilePadY * 2
     radius: Tokens.tileRadius
@@ -132,6 +139,57 @@ Rectangle {
                 elide: Text.ElideRight
                 font.pointSize: Tokens.pt(10.5)
                 color: Tokens.detail
+            }
+        }
+
+        Item {
+            id: chevron
+
+            visible: tile.configurable && tile.available
+            Layout.preferredWidth: Tokens.chevronSize
+            Layout.preferredHeight: Tokens.chevronSize
+            Layout.alignment: Qt.AlignVCenter
+
+            Rectangle {
+                anchors.fill: parent
+                radius: height / 2
+                color: Qt.rgba(1, 1, 1, chevronMouse.containsMouse ? 0.14 : 0)
+
+                Behavior on color {
+                    ColorAnimation { duration: 120 }
+                }
+            }
+
+            Kirigami.Icon {
+                anchors.centerIn: parent
+                width: Kirigami.Units.iconSizes.small
+                height: Kirigami.Units.iconSizes.small
+
+                source: "arrow-right-symbolic"
+                color: Tokens.text
+                isMask: true
+                active: false
+
+                // Quiet until the tile is under the pointer, so a grid at rest
+                // is still the design's grid.
+                opacity: chevronMouse.containsMouse ? 1
+                       : hover.hovered ? 0.75 : 0.3
+
+                Behavior on opacity {
+                    NumberAnimation { duration: 120 }
+                }
+            }
+
+            // A MouseArea rather than a TapHandler: it takes the press before
+            // the tile's handler sees it, which is what keeps a tap on the
+            // chevron from also flipping the switch.
+            MouseArea {
+                id: chevronMouse
+
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: tile.configure()
             }
         }
     }

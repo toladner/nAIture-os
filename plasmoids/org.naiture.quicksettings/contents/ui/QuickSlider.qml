@@ -108,13 +108,4 @@ RowLayout {
             }
         }
     }
-
-    PC3.Label {
-        Layout.preferredWidth: Tokens.sliderValueWidth
-        horizontalAlignment: Text.AlignRight
-        text: Math.round(slider.value * 100) + "%"
-        font.pointSize: Tokens.pt(10)
-        font.features: ({ "tnum": 1 })
-        color: Qt.rgba(Tokens.detail.r, Tokens.detail.g, Tokens.detail.b, 0.4)
-    }
 }
