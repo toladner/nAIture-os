@@ -465,6 +465,81 @@ will stop somewhere entirely different — and then decide for the console, the
 explorer and the browser together, at whichever of the two depths the evidence
 by then supports.
 
+This section is about **applications**, and it still stands. It is not the
+answer for the desktop itself: see the next section, which asks the question
+against a goal this one did not have.
+
+## The shell is the level below, and the applets are not
+
+The two deferred notes above ask the wrong question, and the answer changes once
+the goal is written down properly. The goal is **a desktop that gains UI while
+it is running** — an agent writes a widget, an icon, a panel, and it is on the
+screen without a rebuild, a reinstall or a new session. Judge the options
+against that and the ordering inverts.
+
+**A compiled application is the wrong substrate.** Everything in *Deferred:
+windows of our own* points at a KF6 app hosting `konsolepart` or `dolphinpart`.
+That reaches the console's tab strip, but it makes every future widget a
+compiler away. QML is the substrate the goal actually needs: interpreted, hot
+loadable, no toolchain, and already what this repo is written in.
+
+**A stripped-down OS is not the level either.** Nothing in Fedora stands
+between an agent and the screen. An image is how this gets *distributed* once
+there is something to distribute; it is not how it gets control.
+
+**plasmashell is what stands in the way, and the evidence is already in this
+file.** Every one of these was found the hard way, and each is an obstruction to
+UI that arrives at runtime:
+
+* the scripting API accepts `height`, `lengthMode`, `alignment` and
+  `opacityMode` and silently drops them, and `evaluateScript` always returns an
+  empty string, so nothing reports the failure;
+* applet config written through `widgetById(...).writeConfig()` does not stick;
+* plasmashell rewrites its own config on exit, so those keys can only be written
+  while it is **stopped**;
+* the QML engine caches a component by URL for the life of the process, so a
+  reinstalled widget keeps running the old code until the session ends.
+
+A shell that has to be killed to accept a setting cannot host a desktop that
+grows.
+
+**So: our own shell, and only the shell.** KWin stays. Window management,
+input, HDR, multiple screens, portals, the session and the lock screen are
+thousands of hours of plumbing that no part of the goal requires — and none of
+it is in the way. What gets replaced is `plasmashell`: a QML program drawing the
+islands, the start sheet and the quick-settings sheet as layer-shell surfaces.
+
+`quickshell` is the host and it is packaged — `dnf install quickshell`, in
+Fedora 44's `updates`, not a COPR. `layer-shell-qt` is already installed because
+Plasma depends on it. Hot reload is one of quickshell's own features, which is
+the single property the whole idea rests on.
+
+**Widgets become data.** A directory of QML files, one JSON manifest each
+saying what the widget is, where it wants to sit and what it may touch. The
+shell watches the directory and instantiates what it finds. Nothing is
+registered, nothing is restarted.
+
+**Declare a widget's capabilities in that manifest from the first line of code.**
+Generated QML runs with the user's privileges and reaches the filesystem and
+D-Bus through its imports. Granting only what a manifest asks for is cheap to
+build in now and very expensive to retrofit around widgets that already assume
+the run of the machine.
+
+**What this deletes.** Most of what the three applets fight is the host, so it
+goes with the host: the ~8px inset Plasma adds past any theme margin, the active
+marker that can only blink because it is a 9-slice frame swapped per tile, the
+size hints that must sit on `PlasmoidItem`, `PlasmaCore.Dialog` standing in for
+an applet popup that paints itself opaque, the card re-centred by hand, and
+`kwin/naiture-dock` in its entirety — a whole KWin script written because Plasma
+has no hover state for a panel, where a shell of our own has a property. What
+survives is everything below that line: the scenes, `konsole/naiture-view`, the
+palette, the SVG generators and the applets' actual behaviour.
+
+**The apps are a separate question and stay deferred.** The console's tab strip
+and the explorer's rows are still out of reach and still cost what the note
+above says they cost. The shell is where the agent builds; app chrome is a
+different fight, and the browser is still the next piece of evidence for it.
+
 ## Things that will trip you up
 
 **`sudo` may have no TTY.** In non-interactive shells `sudo` fails with "a
